@@ -60,9 +60,8 @@ export default async function handler(
           email: getFirstField(fields.email) ?? '',
           linkedinUrl: getFirstField(fields.linkedinUrl) ?? '',
           githubUrl: getFirstField(fields.githubUrl) ?? '',
-          shortBio: getFirstField(fields.shortBio) ?? '',
+          professionalStatement: getFirstField(fields.professionalStatement) ?? '',
           resumeUrl,
-          availableForWork: getFirstField(fields.availableForWork) === 'yes',
           technicalSkills: {
             create: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]').map((skill: string) => ({ name: skill })),
           },
