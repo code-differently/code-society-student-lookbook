@@ -26,9 +26,8 @@ interface Submission {
   email: string
   linkedinUrl: string | null
   githubUrl: string | null
-  shortBio: string
+  professionalStatement: string
   resumeUrl: string
-  availableForWork: boolean
   technicalSkills: { name: string }[]
   certifications: { name: string }[]
   careerInterests: { name: string }[]
@@ -59,9 +58,6 @@ function SubmissionCard({ submission }: { submission: Submission }) {
                 {submission.email}
               </Text>
               <HStack mt={2} spacing={2}>
-                {submission.availableForWork && (
-                  <Badge colorScheme="green">Available for Work</Badge>
-                )}
                 <Badge colorScheme="blue">
                   {submission.technicalSkills.length} Skills
                 </Badge>
@@ -84,8 +80,8 @@ function SubmissionCard({ submission }: { submission: Submission }) {
           <Collapse in={isOpen} animateOpacity>
             <Stack divider={<StackDivider />} spacing={4} pt={4}>
               <Box>
-                <Text fontWeight="bold" mb={2}>Bio</Text>
-                <Text>{submission.shortBio}</Text>
+                <Text fontWeight="bold" mb={2}>Professional Statement</Text>
+                <Text>{submission.professionalStatement}</Text>
               </Box>
 
               <Box>

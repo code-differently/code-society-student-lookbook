@@ -19,9 +19,8 @@ model Student {
   email            String            @unique
   linkedinUrl      String?
   githubUrl        String?
-  shortBio         String
+  professionalStatement String
   resumeUrl        String
-  availableForWork Boolean
   technicalSkills  TechnicalSkill[]
   certifications   Certification[]
   careerInterests  CareerInterest[]

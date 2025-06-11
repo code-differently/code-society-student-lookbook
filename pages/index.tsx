@@ -39,13 +39,12 @@ interface FormData {
   email: string
   linkedinUrl: string
   githubUrl: string
-  shortBio: string
+  professionalStatement: string
   resume: File | null
   technicalSkills: string[]
   certifications: string[]
   careerInterests: string[]
   workExperience: string[]
-  availableForWork: string
 }
 
 export default function Home() {
@@ -57,13 +56,12 @@ export default function Home() {
     email: '',
     linkedinUrl: '',
     githubUrl: '',
-    shortBio: '',
+    professionalStatement: '',
     resume: null,
     technicalSkills: [],
     certifications: [],
     careerInterests: [],
     workExperience: [],
-    availableForWork: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -104,11 +102,10 @@ export default function Home() {
       form.append('email', formData.email)
       form.append('linkedinUrl', formData.linkedinUrl)
       form.append('githubUrl', formData.githubUrl)
-      form.append('shortBio', formData.shortBio)
+      form.append('professionalStatement', formData.professionalStatement)
       if (formData.resume) {
         form.append('resume', formData.resume)
       }
-      form.append('availableForWork', formData.availableForWork)
       form.append('technicalSkills', JSON.stringify(formData.technicalSkills))
       form.append('certifications', JSON.stringify(formData.certifications))
       form.append('careerInterests', JSON.stringify(formData.careerInterests))
@@ -203,10 +200,10 @@ export default function Home() {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Short Bio</FormLabel>
+            <FormLabel>Professional Statement</FormLabel>
             <Textarea
-              value={formData.shortBio}
-              onChange={(e) => setFormData({ ...formData, shortBio: e.target.value })}
+              value={formData.professionalStatement}
+              onChange={(e) => setFormData({ ...formData, professionalStatement: e.target.value })}
               _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
             />
           </FormControl>
@@ -316,7 +313,7 @@ export default function Home() {
           <FormControl isInvalid={!!errors.certifications}>
             <FormLabel>Certifications (Select at least one)</FormLabel>
             <Stack>
-              {['Scrum', 'AWS', 'Google IT', 'CompTIA', 'None'].map((cert) => (
+              {['Scrum', 'AWS', 'Google IT', 'CompTIA', 'Responsive Web Design', 'None'].map((cert) => (
                 <Checkbox
                   key={cert}
                   isChecked={formData.certifications.includes(cert)}
@@ -398,7 +395,7 @@ export default function Home() {
           <FormControl isInvalid={!!errors.careerInterests}>
             <FormLabel>Career Interests (Select at least one)</FormLabel>
             <Stack>
-              {['Frontend', 'Backend', 'Full Stack', 'Cybersecurity', 'UI/UX', 'QA', 'DevOps'].map((interest) => (
+              {['Frontend', 'Backend', 'Full Stack', 'Cybersecurity', 'UI/UX', 'QA', 'DevOps', 'Flexible/Open'].map((interest) => (
                 <Checkbox
                   key={interest}
                   isChecked={formData.careerInterests.includes(interest)}
@@ -550,23 +547,6 @@ export default function Home() {
                 </Box>
               )}
             </Stack>
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Currently Available for Work?</FormLabel>
-            <RadioGroup
-              value={formData.availableForWork}
-              onChange={(value) => setFormData({ ...formData, availableForWork: value })}
-            >
-              <Stack direction="row" spacing={8}>
-                <Radio value="yes" _hover={{ transform: 'scale(1.05)' }} transition="all 0.2s">
-                  Yes
-                </Radio>
-                <Radio value="no" _hover={{ transform: 'scale(1.05)' }} transition="all 0.2s">
-                  No
-                </Radio>
-              </Stack>
-            </RadioGroup>
           </FormControl>
         </VStack>
       ),
