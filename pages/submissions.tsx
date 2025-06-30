@@ -31,9 +31,18 @@ import {
   StatNumber,
   StatHelpText,
   SimpleGrid,
+  Checkbox,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  Image,
 } from '@chakra-ui/react'
-import { ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@chakra-ui/icons'
+import { ChevronDownIcon, ChevronUpIcon, SearchIcon, DownloadIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import FilterPanel, { FilterState } from '../components/FilterPanel'
+import NextImage from 'next/image'
 
 interface Submission {
   id: string
@@ -43,6 +52,7 @@ interface Submission {
   githubUrl: string | null
   professionalStatement: string
   resumeUrl: string
+  headshotUrl?: string | null
   technicalSkills: { name: string }[]
   certifications: { name: string }[]
   careerInterests: { name: string }[]
@@ -56,169 +66,324 @@ interface ApiResponse {
   hasMore: boolean
 }
 
-function SubmissionCard({ submission }: { submission: Submission }) {
+function SubmissionCard({ submission, isSelected, onSelect }: { submission: Submission, isSelected: boolean, onSelect: (id: string) => void }) {
   const { isOpen, onToggle } = useDisclosure()
+  const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure()
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
 
+  const handleDownloadHeadshot = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (submission.headshotUrl) {
+      const link = document.createElement('a')
+      link.href = submission.headshotUrl
+      link.download = `${submission.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_headshot.jpg`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }
+
+  const handleHeadshotClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (submission.headshotUrl) {
+      onModalOpen()
+    }
+  }
+
   return (
-    <Card 
-      bg={cardBg} 
-      border="1px solid"
-      borderColor={borderColor}
-      borderRadius="xl"
-      boxShadow="sm"
-      transition="all 0.2s"
-      _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
-      cursor="pointer"
-      onClick={onToggle}
-    >
-      <CardBody p={6}>
-        <Stack spacing={4}>
-          <HStack justify="space-between" align="center">
-            <Box flex={1}>
-              <Heading size="md" color="gray.800" mb={1}>
-                {submission.fullName}
-              </Heading>
-              <Text color="gray.500" fontSize="sm" mb={3}>
-                {submission.email}
-              </Text>
-              <HStack spacing={3}>
-                <Badge colorScheme="blue" variant="subtle" px={2} py={1}>
-                  {submission.technicalSkills.length} Skills
-                </Badge>
-                <Badge colorScheme="purple" variant="subtle" px={2} py={1}>
-                  {submission.careerInterests.length} Interests
-                </Badge>
-                <Badge colorScheme="green" variant="subtle" px={2} py={1}>
-                  {submission.certifications.length} Certs
-                </Badge>
-              </HStack>
-            </Box>
-            <IconButton
-              aria-label={isOpen ? 'Collapse' : 'Expand'}
-              icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggle()
-              }}
-            />
-          </HStack>
-
-          <Collapse in={isOpen} animateOpacity>
-            <Divider my={4} />
-            <Stack divider={<StackDivider />} spacing={4}>
-              <Box>
-                <Text fontWeight="600" mb={2} color="gray.700">Professional Statement</Text>
-                <Text color="gray.600" fontSize="sm" lineHeight="1.6">
-                  {submission.professionalStatement}
+    <>
+      <Card 
+        bg={cardBg} 
+        border="1px solid"
+        borderColor={borderColor}
+        borderRadius="xl"
+        boxShadow="sm"
+        transition="all 0.2s"
+        _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+        cursor="pointer"
+        onClick={onToggle}
+      >
+        <CardBody p={6}>
+          <Stack spacing={4}>
+            <HStack justify="space-between" align="flex-start">
+              <Box flex={1}>
+                <HStack align="center" spacing={4} mb={1}>
+                  <Checkbox
+                    isChecked={isSelected}
+                    onChange={() => onSelect(submission.id)}
+                    colorScheme="blue"
+                    mr={2}
+                    aria-label={`Select ${submission.fullName}`}
+                  />
+                  <Heading size="md" color="gray.800">
+                    {submission.fullName}
+                  </Heading>
+                </HStack>
+                <Text color="gray.500" fontSize="sm" mb={3}>
+                  {submission.email}
                 </Text>
-              </Box>
-
-              <Box>
-                <Text fontWeight="600" mb={3} color="gray.700">Technical Skills</Text>
-                <Wrap spacing={2}>
-                  {submission.technicalSkills.map((skill) => (
-                    <WrapItem key={skill.name}>
-                      <Badge colorScheme="blue" variant="solid" px={2} py={1} borderRadius="md">
-                        {skill.name}
-                      </Badge>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-
-              <Box>
-                <Text fontWeight="600" mb={3} color="gray.700">Certifications</Text>
-                <Wrap spacing={2}>
-                  {submission.certifications.map((cert) => (
-                    <WrapItem key={cert.name}>
-                      <Badge colorScheme="green" variant="solid" px={2} py={1} borderRadius="md">
-                        {cert.name}
-                      </Badge>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-
-              <Box>
-                <Text fontWeight="600" mb={3} color="gray.700">Career Interests</Text>
-                <Wrap spacing={2}>
-                  {submission.careerInterests.map((interest) => (
-                    <WrapItem key={interest.name}>
-                      <Badge colorScheme="purple" variant="solid" px={2} py={1} borderRadius="md">
-                        {interest.name}
-                      </Badge>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-
-              <Box>
-                <Text fontWeight="600" mb={3} color="gray.700">Work Experience</Text>
-                <Wrap spacing={2}>
-                  {submission.workExperience.map((exp) => (
-                    <WrapItem key={exp.name}>
-                      <Badge colorScheme="orange" variant="solid" px={2} py={1} borderRadius="md">
-                        {exp.name}
-                      </Badge>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-
-              <Box>
-                <Text fontWeight="600" mb={3} color="gray.700">Links</Text>
-                <HStack spacing={4}>
-                  {submission.linkedinUrl && (
-                    <Button
-                      as="a"
-                      href={submission.linkedinUrl}
-                      target="_blank"
-                      size="sm"
-                      colorScheme="blue"
-                      variant="outline"
-                    >
-                      LinkedIn
-                    </Button>
-                  )}
-                  {submission.githubUrl && (
-                    <Button
-                      as="a"
-                      href={submission.githubUrl}
-                      target="_blank"
-                      size="sm"
-                      colorScheme="gray"
-                      variant="outline"
-                    >
-                      GitHub
-                    </Button>
-                  )}
-                  {submission.resumeUrl && (
-                    <Button
-                      as="a"
-                      href={submission.resumeUrl}
-                      target="_blank"
-                      size="sm"
-                      colorScheme="green"
-                      variant="outline"
-                    >
-                      Resume
-                    </Button>
-                  )}
+                <HStack spacing={3}>
+                  <Badge colorScheme="blue" variant="subtle" px={2} py={1}>
+                    {submission.technicalSkills.length} Skills
+                  </Badge>
+                  <Badge colorScheme="purple" variant="subtle" px={2} py={1}>
+                    {submission.careerInterests.length} Interests
+                  </Badge>
+                  <Badge colorScheme="green" variant="subtle" px={2} py={1}>
+                    {submission.certifications.length} Certs
+                  </Badge>
                 </HStack>
               </Box>
+              
+              {/* Headshot on the right side */}
+              <VStack spacing={2} align="center">
+                {submission.headshotUrl ? (
+                  <Box position="relative">
+                    <Box 
+                      boxSize="80px" 
+                      minW="80px" 
+                      borderRadius="full" 
+                      overflow="hidden" 
+                      border="3px solid" 
+                      borderColor="gray.200"
+                      cursor="pointer"
+                      onClick={handleHeadshotClick}
+                      _hover={{ 
+                        borderColor: 'blue.400',
+                        transform: 'scale(1.05)',
+                        boxShadow: 'lg'
+                      }}
+                      transition="all 0.2s"
+                    >
+                      <NextImage
+                        src={submission.headshotUrl}
+                        alt={submission.fullName + ' headshot'}
+                        width={80}
+                        height={80}
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover',
+                          borderRadius: '50%'
+                        }}
+                      />
+                    </Box>
+                    {/* Hover overlay */}
+                    <Box
+                      position="absolute"
+                      top="0"
+                      left="0"
+                      right="0"
+                      bottom="0"
+                      bg="rgba(0,0,0,0.5)"
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      opacity="0"
+                      _hover={{ opacity: 1 }}
+                      transition="opacity 0.2s"
+                      cursor="pointer"
+                      onClick={handleHeadshotClick}
+                    >
+                      <Text color="white" fontSize="xs" fontWeight="bold">
+                        Click to view
+                      </Text>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box 
+                    boxSize="80px" 
+                    minW="80px" 
+                    borderRadius="full" 
+                    bg="gray.100" 
+                    display="flex" 
+                    alignItems="center" 
+                    justifyContent="center" 
+                    fontSize="sm" 
+                    color="gray.400" 
+                    border="3px solid" 
+                    borderColor="gray.200"
+                  >
+                    No Photo
+                  </Box>
+                )}
+                <Text fontSize="xs" color="gray.500" textAlign="center">
+                  {submission.headshotUrl ? 'Click to view' : 'No headshot'}
+                </Text>
+              </VStack>
 
-              <Text fontSize="sm" color="gray.500" textAlign="right">
-                Submitted on {new Date(submission.createdAt).toLocaleDateString()}
-              </Text>
-            </Stack>
-          </Collapse>
-        </Stack>
-      </CardBody>
-    </Card>
+              <IconButton
+                aria-label={isOpen ? 'Collapse' : 'Expand'}
+                icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggle()
+                }}
+              />
+            </HStack>
+
+            <Collapse in={isOpen} animateOpacity>
+              <Divider my={4} />
+              <Stack divider={<StackDivider />} spacing={4}>
+                <Box>
+                  <Text fontWeight="600" mb={2} color="gray.700">Professional Statement</Text>
+                  <Text color="gray.600" fontSize="sm" lineHeight="1.6">
+                    {submission.professionalStatement}
+                  </Text>
+                </Box>
+
+                <Box>
+                  <Text fontWeight="600" mb={3} color="gray.700">Technical Skills</Text>
+                  <Wrap spacing={2}>
+                    {submission.technicalSkills.map((skill) => (
+                      <WrapItem key={skill.name}>
+                        <Badge colorScheme="blue" variant="solid" px={2} py={1} borderRadius="md">
+                          {skill.name}
+                        </Badge>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                </Box>
+
+                <Box>
+                  <Text fontWeight="600" mb={3} color="gray.700">Certifications</Text>
+                  <Wrap spacing={2}>
+                    {submission.certifications.map((cert) => (
+                      <WrapItem key={cert.name}>
+                        <Badge colorScheme="green" variant="solid" px={2} py={1} borderRadius="md">
+                          {cert.name}
+                        </Badge>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                </Box>
+
+                <Box>
+                  <Text fontWeight="600" mb={3} color="gray.700">Career Interests</Text>
+                  <Wrap spacing={2}>
+                    {submission.careerInterests.map((interest) => (
+                      <WrapItem key={interest.name}>
+                        <Badge colorScheme="purple" variant="solid" px={2} py={1} borderRadius="md">
+                          {interest.name}
+                        </Badge>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                </Box>
+
+                <Box>
+                  <Text fontWeight="600" mb={3} color="gray.700">Work Experience</Text>
+                  <Wrap spacing={2}>
+                    {submission.workExperience.map((exp) => (
+                      <WrapItem key={exp.name}>
+                        <Badge colorScheme="orange" variant="solid" px={2} py={1} borderRadius="md">
+                          {exp.name}
+                        </Badge>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                </Box>
+
+                <Box>
+                  <Text fontWeight="600" mb={3} color="gray.700">Links</Text>
+                  <HStack spacing={4}>
+                    {submission.linkedinUrl && (
+                      <Button
+                        as="a"
+                        href={submission.linkedinUrl}
+                        target="_blank"
+                        size="sm"
+                        colorScheme="blue"
+                        variant="outline"
+                      >
+                        LinkedIn
+                      </Button>
+                    )}
+                    {submission.githubUrl && (
+                      <Button
+                        as="a"
+                        href={submission.githubUrl}
+                        target="_blank"
+                        size="sm"
+                        colorScheme="gray"
+                        variant="outline"
+                      >
+                        GitHub
+                      </Button>
+                    )}
+                    {submission.resumeUrl && (
+                      <Button
+                        as="a"
+                        href={submission.resumeUrl}
+                        target="_blank"
+                        size="sm"
+                        colorScheme="green"
+                        variant="outline"
+                      >
+                        Resume
+                      </Button>
+                    )}
+                  </HStack>
+                </Box>
+
+                <Text fontSize="sm" color="gray.500" textAlign="right">
+                  Submitted on {new Date(submission.createdAt).toLocaleDateString()}
+                </Text>
+              </Stack>
+            </Collapse>
+          </Stack>
+        </CardBody>
+      </Card>
+
+      {/* Headshot Modal */}
+      <Modal isOpen={isModalOpen} onClose={onModalClose} size="lg" isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>
+            {submission.fullName} - Headshot
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack spacing={4}>
+              <Box
+                borderRadius="lg"
+                overflow="hidden"
+                boxShadow="lg"
+                bg="gray.50"
+                p={4}
+              >
+                <Image
+                  src={submission.headshotUrl!}
+                  alt={`${submission.fullName} headshot`}
+                  maxH="400px"
+                  mx="auto"
+                  objectFit="contain"
+                />
+              </Box>
+              <HStack spacing={4}>
+                <Button
+                  leftIcon={<DownloadIcon />}
+                  colorScheme="blue"
+                  onClick={handleDownloadHeadshot}
+                >
+                  Download Headshot
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={onModalClose}
+                >
+                  Close
+                </Button>
+              </HStack>
+            </VStack>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </>
   )
 }
 
@@ -248,6 +413,8 @@ export default function Submissions() {
     skillLevel: 'any',
     certificationLevel: 'any',
   })
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [exporting, setExporting] = useState(false)
 
   const buildQueryString = useCallback((filters: FilterState) => {
     const params = new URLSearchParams()
@@ -312,6 +479,72 @@ export default function Submissions() {
   const handleFiltersChange = useCallback((newFilters: FilterState) => {
     setFilters(newFilters)
   }, [])
+
+  const handleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === submissions.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(submissions.map((s) => s.id))
+    }
+  }
+
+  const handleExportProfiles = async () => {
+    if (selectedIds.length === 0) return
+    setExporting(true)
+    try {
+      const res = await fetch('/api/export-profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds: selectedIds }),
+      })
+      if (!res.ok) throw new Error('Failed to export profiles')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'student-profiles.html'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Error exporting profiles')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleExportResumes = async () => {
+    if (selectedIds.length === 0) return
+    setExporting(true)
+    try {
+      const res = await fetch('/api/export-resumes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds: selectedIds }),
+      })
+      if (!res.ok) throw new Error('Failed to export resumes')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'student-resumes.zip'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Error exporting resumes')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   if (error) {
     return (
@@ -384,8 +617,40 @@ export default function Submissions() {
             <FilterPanel onFiltersChange={handleFiltersChange} isLoading={loading} />
           </GridItem>
 
-          {/* Results */}
+          {/* Export/Selection Controls */}
           <GridItem>
+            <Flex mb={4} align="center" gap={4} wrap="wrap">
+              <Checkbox
+                isChecked={selectedIds.length === submissions.length && submissions.length > 0}
+                isIndeterminate={selectedIds.length > 0 && selectedIds.length < submissions.length}
+                onChange={handleSelectAll}
+                colorScheme="blue"
+              >
+                Select All
+              </Checkbox>
+              <Button
+                colorScheme="blue"
+                leftIcon={<ExternalLinkIcon />}
+                onClick={handleExportProfiles}
+                isLoading={exporting}
+                isDisabled={selectedIds.length === 0}
+              >
+                Export Profiles
+              </Button>
+              <Button
+                colorScheme="green"
+                leftIcon={<DownloadIcon />}
+                onClick={handleExportResumes}
+                isLoading={exporting}
+                isDisabled={selectedIds.length === 0}
+              >
+                Download Resumes
+              </Button>
+              <Text color="gray.500" fontSize="sm">
+                {selectedIds.length} selected
+              </Text>
+            </Flex>
+
             {/* Loading State */}
             {loading && (
               <Center py={20}>
@@ -437,7 +702,12 @@ export default function Submissions() {
             {!loading && submissions.length > 0 && (
               <VStack spacing={4} align="stretch">
                 {submissions.map((submission) => (
-                  <SubmissionCard key={submission.id} submission={submission} />
+                  <SubmissionCard
+                    key={submission.id}
+                    submission={submission}
+                    isSelected={selectedIds.includes(submission.id)}
+                    onSelect={handleSelect}
+                  />
                 ))}
               </VStack>
             )}

@@ -2,8 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '../../lib/prisma'
 import * as formidable from 'formidable'
 import type { File, Fields, Files, Part } from 'formidable'
-import fs from 'fs'
-import path from 'path'
+import * as fs from 'fs'
+import * as path from 'path'
 
 export const config = {
   api: {
@@ -40,7 +40,16 @@ export default async function handler(
     uploadDir: uploadsDir,
     keepExtensions: true,
     maxFileSize: 10 * 1024 * 1024, // 10MB
-    filter: (part: Part) => part.mimetype === 'application/pdf',
+    filter: (part: Part) => {
+      // Allow PDFs for resumes and images for headshots
+      if (part.name === 'resume') {
+        return part.mimetype === 'application/pdf'
+      }
+      if (part.name === 'headshot') {
+        return part.mimetype?.startsWith('image/') || false
+      }
+      return false
+    },
   })
 
   form.parse(req, async (err: any, fields: Fields, files: Files) => {
@@ -48,10 +57,15 @@ export default async function handler(
       return res.status(400).json({ success: false, message: 'File upload error' })
     }
 
-    // Handle file (could be File or File[] or undefined)
+    // Handle resume file
     const resumeFileRaw = files.resume
     const resumeFile = Array.isArray(resumeFileRaw) ? resumeFileRaw[0] : resumeFileRaw
     const resumeUrl = resumeFile ? `/uploads/${path.basename(resumeFile.filepath)}` : ''
+
+    // Handle headshot file
+    const headshotFileRaw = files.headshot
+    const headshotFile = Array.isArray(headshotFileRaw) ? headshotFileRaw[0] : headshotFileRaw
+    const headshotUrl = headshotFile ? `/uploads/${path.basename(headshotFile.filepath)}` : null
 
     try {
       const student = await prisma.student.create({
@@ -62,6 +76,7 @@ export default async function handler(
           githubUrl: getFirstField(fields.githubUrl) ?? '',
           professionalStatement: getFirstField(fields.professionalStatement) ?? '',
           resumeUrl,
+          headshotUrl,
           technicalSkills: {
             create: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]').map((skill: string) => ({ name: skill })),
           },

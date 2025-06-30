@@ -20,7 +20,8 @@ model Student {
   linkedinUrl      String?
   githubUrl        String?
   professionalStatement String
-  resumeUrl        String
+  resumeUrl        String?
+  headshotUrl      String?
   technicalSkills  TechnicalSkill[]
   certifications   Certification[]
   careerInterests  CareerInterest[]
