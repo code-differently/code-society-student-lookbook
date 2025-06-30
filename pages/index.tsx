@@ -41,6 +41,7 @@ interface FormData {
   githubUrl: string
   professionalStatement: string
   resume: File | null
+  headshot: File | null
   technicalSkills: string[]
   certifications: string[]
   careerInterests: string[]
@@ -58,6 +59,7 @@ export default function Home() {
     githubUrl: '',
     professionalStatement: '',
     resume: null,
+    headshot: null,
     technicalSkills: [],
     certifications: [],
     careerInterests: [],
@@ -106,6 +108,9 @@ export default function Home() {
       if (formData.resume) {
         form.append('resume', formData.resume)
       }
+      if (formData.headshot) {
+        form.append('headshot', formData.headshot)
+      }
       form.append('technicalSkills', JSON.stringify(formData.technicalSkills))
       form.append('certifications', JSON.stringify(formData.certifications))
       form.append('careerInterests', JSON.stringify(formData.careerInterests))
@@ -146,9 +151,9 @@ export default function Home() {
     }
   }
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, type: 'resume' | 'headshot') => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, resume: e.target.files[0] })
+      setFormData({ ...formData, [type]: e.target.files[0] })
     }
   }
 
@@ -207,6 +212,20 @@ export default function Home() {
               _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
             />
           </FormControl>
+
+          <FormControl>
+            <FormLabel>Upload Headshot (JPG, PNG, max 5MB)</FormLabel>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, 'headshot')}
+              p={1}
+              border="2px dashed"
+              borderColor="gray.200"
+              _hover={{ borderColor: 'blue.500' }}
+              _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+            />
+          </FormControl>
         </VStack>
       ),
     },
@@ -220,7 +239,7 @@ export default function Home() {
           <Input
             type="file"
             accept=".pdf"
-            onChange={handleFileChange}
+            onChange={(e) => handleFileChange(e, 'resume')}
             p={1}
             border="2px dashed"
             borderColor="gray.200"
