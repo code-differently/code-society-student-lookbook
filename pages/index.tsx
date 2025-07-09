@@ -34,6 +34,11 @@ import {
 } from '@chakra-ui/react'
 import { ChevronDownIcon } from '@chakra-ui/icons'
 
+interface CertificationWithStatus {
+  name: string
+  status?: string
+}
+
 interface FormData {
   fullName: string
   email: string
@@ -43,9 +48,12 @@ interface FormData {
   resume: File | null
   headshot: File | null
   technicalSkills: string[]
-  certifications: string[]
+  certifications: CertificationWithStatus[]
   careerInterests: string[]
   workExperience: string[]
+  yearsOfExperience: string
+  educationDegree: string
+  educationField: string
 }
 
 export default function Home() {
@@ -64,6 +72,9 @@ export default function Home() {
     certifications: [],
     careerInterests: [],
     workExperience: [],
+    yearsOfExperience: '',
+    educationDegree: '',
+    educationField: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -112,6 +123,9 @@ export default function Home() {
         form.append('headshot', formData.headshot)
       }
       form.append('technicalSkills', JSON.stringify(formData.technicalSkills))
+      form.append('yearsOfExperience', formData.yearsOfExperience)
+      form.append('educationDegree', formData.educationDegree)
+      form.append('educationField', formData.educationField)
       form.append('certifications', JSON.stringify(formData.certifications))
       form.append('careerInterests', JSON.stringify(formData.careerInterests))
       form.append('workExperience', JSON.stringify(formData.workExperience))
@@ -141,13 +155,46 @@ export default function Home() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Something went wrong. Please try again.'
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      })
+      
+      // Check if it's a file upload error and navigate to the appropriate section
+      if (errorMessage.includes('Resume must be a PDF') || errorMessage.includes('resume')) {
+        setActiveSection('resume')
+        toast({
+          title: 'Resume Upload Error',
+          description: errorMessage,
+          status: 'error',
+          duration: 8000,
+          isClosable: true,
+          position: 'top',
+        })
+      } else if (errorMessage.includes('Headshot must be an image') || errorMessage.includes('headshot')) {
+        setActiveSection('personal')
+        toast({
+          title: 'Headshot Upload Error',
+          description: errorMessage,
+          status: 'error',
+          duration: 8000,
+          isClosable: true,
+          position: 'top',
+        })
+      } else if (errorMessage.includes('File size exceeds')) {
+        toast({
+          title: 'File Size Error',
+          description: errorMessage,
+          status: 'error',
+          duration: 8000,
+          isClosable: true,
+          position: 'top',
+        })
+      } else {
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
+      }
     }
   }
 
@@ -214,7 +261,7 @@ export default function Home() {
           </FormControl>
 
           <FormControl>
-            <FormLabel>Upload Headshot (JPG, PNG, max 5MB)</FormLabel>
+            <FormLabel>Upload Headshot (JPG, PNG, max 10MB)</FormLabel>
             <Input
               type="file"
               accept="image/*"
@@ -223,6 +270,29 @@ export default function Home() {
               border="2px dashed"
               borderColor="gray.200"
               _hover={{ borderColor: 'blue.500' }}
+              _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+            />
+            <Text fontSize="sm" color="gray.500" mt={1}>
+              Supported formats: JPG, PNG, GIF. Maximum file size: 10MB
+            </Text>
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Education Degree</FormLabel>
+            <Input
+              placeholder="e.g. Bachelor's, Bootcamp Graduate"
+              value={formData.educationDegree}
+              onChange={e => setFormData({ ...formData, educationDegree: e.target.value })}
+              _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Field of Study</FormLabel>
+            <Input
+              placeholder="e.g. Computer Science, Business"
+              value={formData.educationField}
+              onChange={e => setFormData({ ...formData, educationField: e.target.value })}
               _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
             />
           </FormControl>
@@ -246,6 +316,9 @@ export default function Home() {
             _hover={{ borderColor: 'blue.500' }}
             _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
           />
+          <Text fontSize="sm" color="gray.500" mt={1}>
+            PDF format only. Maximum file size: 10MB
+          </Text>
         </FormControl>
       ),
     },
@@ -335,11 +408,11 @@ export default function Home() {
               {['Scrum', 'AWS', 'Google IT', 'CompTIA', 'Responsive Web Design', 'None'].map((cert) => (
                 <Checkbox
                   key={cert}
-                  isChecked={formData.certifications.includes(cert)}
+                  isChecked={formData.certifications.some(c => c.name === cert)}
                   onChange={(e) => {
                     const certs = e.target.checked
-                      ? [...formData.certifications, cert]
-                      : formData.certifications.filter((c) => c !== cert)
+                      ? [...formData.certifications, { name: cert, status: 'Completed' }]
+                      : formData.certifications.filter((c) => c.name !== cert)
                     setFormData({ ...formData, certifications: certs })
                   }}
                   _hover={{ transform: 'translateX(4px)' }}
@@ -356,10 +429,10 @@ export default function Home() {
                       e.preventDefault()
                       const input = e.target as HTMLInputElement
                       const value = input.value.trim()
-                      if (value && !formData.certifications.includes(value)) {
+                      if (value && !formData.certifications.some(c => c.name === value)) {
                         setFormData({
                           ...formData,
-                          certifications: [...formData.certifications, value],
+                          certifications: [...formData.certifications, { name: value, status: 'Completed' }],
                         })
                         input.value = ''
                       }
@@ -376,7 +449,7 @@ export default function Home() {
                   <Text fontSize="sm" fontWeight="bold">Selected Certifications:</Text>
                   <Wrap mt={1}>
                     {formData.certifications.map((cert) => (
-                      <WrapItem key={cert}>
+                      <WrapItem key={cert.name}>
                         <Tag
                           size="md"
                           borderRadius="full"
@@ -386,13 +459,13 @@ export default function Home() {
                           onClick={() => {
                             setFormData({
                               ...formData,
-                              certifications: formData.certifications.filter((c) => c !== cert),
+                              certifications: formData.certifications.filter((c) => c.name !== cert.name),
                             })
                           }}
                           _hover={{ transform: 'scale(1.05)' }}
                           transition="all 0.2s"
                         >
-                          <TagLabel>{cert}</TagLabel>
+                          <TagLabel>{cert.name}</TagLabel>
                           <TagCloseButton />
                         </Tag>
                       </WrapItem>
@@ -566,6 +639,20 @@ export default function Home() {
                 </Box>
               )}
             </Stack>
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Years of Professional Experience</FormLabel>
+            <RadioGroup
+              value={formData.yearsOfExperience}
+              onChange={val => setFormData({ ...formData, yearsOfExperience: val })}
+            >
+              <Stack direction="row">
+                <Radio value="0-3">0-3 years</Radio>
+                <Radio value="4-7">4-7 years</Radio>
+                <Radio value="8+">8+ years</Radio>
+              </Stack>
+            </RadioGroup>
           </FormControl>
         </VStack>
       ),

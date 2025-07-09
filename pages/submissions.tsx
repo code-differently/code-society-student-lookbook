@@ -52,9 +52,12 @@ interface Submission {
   githubUrl: string | null
   professionalStatement: string
   resumeUrl: string
-  headshotUrl?: string | null
+  headshotUrl?: string 
+  yearsOfExperience?: string | null
+  educationDegree?: string | null
+  educationField?: string | null
   technicalSkills: { name: string }[]
-  certifications: { name: string }[]
+  certifications: { name: string, status?: string | null }[]
   careerInterests: { name: string }[]
   workExperience: { name: string }[]
   createdAt: string
@@ -93,19 +96,19 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
 
   return (
     <>
-      <Card 
-        bg={cardBg} 
+    <Card 
+      bg={cardBg} 
         border="1px solid"
         borderColor={borderColor}
         borderRadius="xl"
         boxShadow="sm"
-        transition="all 0.2s"
-        _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
-        cursor="pointer"
-        onClick={onToggle}
-      >
+      transition="all 0.2s"
+      _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+      cursor="pointer"
+      onClick={onToggle}
+    >
         <CardBody p={6}>
-          <Stack spacing={4}>
+        <Stack spacing={4}>
             <HStack justify="space-between" align="flex-start">
               <Box flex={1}>
                 <HStack align="center" spacing={4} mb={1}>
@@ -121,20 +124,20 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   </Heading>
                 </HStack>
                 <Text color="gray.500" fontSize="sm" mb={3}>
-                  {submission.email}
-                </Text>
+                {submission.email}
+              </Text>
                 <HStack spacing={3}>
                   <Badge colorScheme="blue" variant="subtle" px={2} py={1}>
-                    {submission.technicalSkills.length} Skills
-                  </Badge>
+                  {submission.technicalSkills.length} Skills
+                </Badge>
                   <Badge colorScheme="purple" variant="subtle" px={2} py={1}>
-                    {submission.careerInterests.length} Interests
-                  </Badge>
+                  {submission.careerInterests.length} Interests
+                </Badge>
                   <Badge colorScheme="green" variant="subtle" px={2} py={1}>
                     {submission.certifications.length} Certs
                   </Badge>
-                </HStack>
-              </Box>
+              </HStack>
+            </Box>
               
               {/* Headshot on the right side */}
               <VStack spacing={2} align="center">
@@ -214,19 +217,19 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                 </Text>
               </VStack>
 
-              <IconButton
-                aria-label={isOpen ? 'Collapse' : 'Expand'}
-                icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                variant="ghost"
+            <IconButton
+              aria-label={isOpen ? 'Collapse' : 'Expand'}
+              icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              variant="ghost"
                 size="sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggle()
-                }}
-              />
-            </HStack>
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggle()
+              }}
+            />
+          </HStack>
 
-            <Collapse in={isOpen} animateOpacity>
+          <Collapse in={isOpen} animateOpacity>
               <Divider my={4} />
               <Stack divider={<StackDivider />} spacing={4}>
                 <Box>
@@ -237,61 +240,80 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                 </Box>
 
                 <Box>
+                  <Text fontWeight="600" mb={2} color="gray.700">Education</Text>
+                  <Text color="gray.600" fontSize="sm">
+                    {submission.educationDegree || '—'}{submission.educationField ? ` in ${submission.educationField}` : ''}
+                  </Text>
+                </Box>
+
+              <Box>
+                  <Text fontWeight="600" mb={2} color="gray.700">Years of Experience</Text>
+                  <Text color="gray.600" fontSize="sm">
+                    {submission.yearsOfExperience || '—'}
+                  </Text>
+              </Box>
+
+              <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Technical Skills</Text>
                   <Wrap spacing={2}>
-                    {submission.technicalSkills.map((skill) => (
-                      <WrapItem key={skill.name}>
+                  {submission.technicalSkills.map((skill) => (
+                    <WrapItem key={skill.name}>
                         <Badge colorScheme="blue" variant="solid" px={2} py={1} borderRadius="md">
                           {skill.name}
                         </Badge>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
 
-                <Box>
+              <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Certifications</Text>
                   <Wrap spacing={2}>
-                    {submission.certifications.map((cert) => (
-                      <WrapItem key={cert.name}>
+                  {submission.certifications.map((cert) => (
+                    <WrapItem key={cert.name}>
                         <Badge colorScheme="green" variant="solid" px={2} py={1} borderRadius="md">
                           {cert.name}
+                          {cert.status ? (
+                            <Text as="span" fontWeight="normal" fontSize="xs" color="white" ml={2}>
+                              ({cert.status})
+                            </Text>
+                          ) : null}
                         </Badge>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
 
-                <Box>
+              <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Career Interests</Text>
                   <Wrap spacing={2}>
-                    {submission.careerInterests.map((interest) => (
-                      <WrapItem key={interest.name}>
+                  {submission.careerInterests.map((interest) => (
+                    <WrapItem key={interest.name}>
                         <Badge colorScheme="purple" variant="solid" px={2} py={1} borderRadius="md">
                           {interest.name}
                         </Badge>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
 
-                <Box>
+              <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Work Experience</Text>
                   <Wrap spacing={2}>
-                    {submission.workExperience.map((exp) => (
-                      <WrapItem key={exp.name}>
+                  {submission.workExperience.map((exp) => (
+                    <WrapItem key={exp.name}>
                         <Badge colorScheme="orange" variant="solid" px={2} py={1} borderRadius="md">
                           {exp.name}
                         </Badge>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
 
-                <Box>
+              <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Links</Text>
                   <HStack spacing={4}>
-                    {submission.linkedinUrl && (
+                  {submission.linkedinUrl && (
                       <Button
                         as="a"
                         href={submission.linkedinUrl}
@@ -300,10 +322,10 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                         colorScheme="blue"
                         variant="outline"
                       >
-                        LinkedIn
+                      LinkedIn
                       </Button>
-                    )}
-                    {submission.githubUrl && (
+                  )}
+                  {submission.githubUrl && (
                       <Button
                         as="a"
                         href={submission.githubUrl}
@@ -312,10 +334,10 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                         colorScheme="gray"
                         variant="outline"
                       >
-                        GitHub
+                      GitHub
                       </Button>
-                    )}
-                    {submission.resumeUrl && (
+                  )}
+                  {submission.resumeUrl && (
                       <Button
                         as="a"
                         href={submission.resumeUrl}
@@ -324,20 +346,20 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                         colorScheme="green"
                         variant="outline"
                       >
-                        Resume
+                      Resume
                       </Button>
-                    )}
+                  )}
                   </HStack>
-                </Box>
+              </Box>
 
                 <Text fontSize="sm" color="gray.500" textAlign="right">
-                  Submitted on {new Date(submission.createdAt).toLocaleDateString()}
-                </Text>
-              </Stack>
-            </Collapse>
-          </Stack>
-        </CardBody>
-      </Card>
+                Submitted on {new Date(submission.createdAt).toLocaleDateString()}
+              </Text>
+            </Stack>
+          </Collapse>
+        </Stack>
+      </CardBody>
+    </Card>
 
       {/* Headshot Modal */}
       <Modal isOpen={isModalOpen} onClose={onModalClose} size="lg" isCentered>
@@ -460,16 +482,16 @@ export default function Submissions() {
       const url = queryString ? `/api/submissions?${queryString}` : '/api/submissions'
       
       const response = await fetch(url)
-      if (!response.ok) throw new Error('Failed to fetch submissions')
+        if (!response.ok) throw new Error('Failed to fetch submissions')
       
       const data: ApiResponse = await response.json()
       setSubmissions(data.submissions)
       setTotalCount(data.totalCount)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+      } finally {
+        setLoading(false)
+      }
   }, [buildQueryString])
 
   useEffect(() => {
@@ -565,8 +587,8 @@ export default function Submissions() {
           <Flex align="center" mb={2}>
             <SearchIcon color="blue.600" boxSize={6} mr={3} />
             <Heading size="xl" color="gray.800" fontWeight="700">
-              Student Submissions
-            </Heading>
+          Student Submissions
+        </Heading>
           </Flex>
           <Text color="gray.600" fontSize="lg">
             Browse and filter through student applications
@@ -700,20 +722,20 @@ export default function Submissions() {
 
             {/* Submissions List */}
             {!loading && submissions.length > 0 && (
-              <VStack spacing={4} align="stretch">
-                {submissions.map((submission) => (
+        <VStack spacing={4} align="stretch">
+          {submissions.map((submission) => (
                   <SubmissionCard
                     key={submission.id}
                     submission={submission}
                     isSelected={selectedIds.includes(submission.id)}
                     onSelect={handleSelect}
                   />
-                ))}
-              </VStack>
+          ))}
+        </VStack>
             )}
           </GridItem>
         </Grid>
-      </Container>
+    </Container>
     </Box>
   )
 } 

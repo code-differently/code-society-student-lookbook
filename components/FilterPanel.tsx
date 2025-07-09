@@ -78,6 +78,9 @@ export interface FilterState {
   profileCompleteness: 'any' | 'complete' | 'partial'
   skillLevel: 'any' | 'beginner' | 'intermediate' | 'advanced'
   certificationLevel: 'any' | 'entry' | 'professional' | 'expert'
+  yearsOfExperience?: string
+  educationDegree?: string
+  educationField?: string
 }
 
 interface AvailableTags {
@@ -114,6 +117,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
     profileCompleteness: 'any',
     skillLevel: 'any',
     certificationLevel: 'any',
+    yearsOfExperience: '',
+    educationDegree: '',
+    educationField: '',
   })
 
   const [availableTags, setAvailableTags] = useState<AvailableTags>({
@@ -175,6 +181,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
       profileCompleteness: 'any',
       skillLevel: 'any',
       certificationLevel: 'any',
+      yearsOfExperience: '',
+      educationDegree: '',
+      educationField: '',
     })
   }
 
@@ -453,6 +462,36 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
         colorScheme="orange"
         label="Work Experience"
       />
+
+      {/* Additional Filters */}
+      <FormControl mb={2}>
+        <FormLabel>Years of Experience</FormLabel>
+        <Select
+          placeholder="Any"
+          value={filters.yearsOfExperience}
+          onChange={e => updateFilter('yearsOfExperience', e.target.value)}
+        >
+          <option value="0-3">0-3 years</option>
+          <option value="4-7">4-7 years</option>
+          <option value="8+">8+ years</option>
+        </Select>
+      </FormControl>
+      <FormControl mb={2}>
+        <FormLabel>Education Degree</FormLabel>
+        <Input
+          placeholder="e.g. Bachelor's, Bootcamp Graduate"
+          value={filters.educationDegree}
+          onChange={e => updateFilter('educationDegree', e.target.value)}
+        />
+      </FormControl>
+      <FormControl mb={2}>
+        <FormLabel>Field of Study</FormLabel>
+        <Input
+          placeholder="e.g. Computer Science, Business"
+          value={filters.educationField}
+          onChange={e => updateFilter('educationField', e.target.value)}
+        />
+      </FormControl>
 
       {/* Advanced Filters */}
       <Card variant="outline" borderColor="gray.200" bg="gray.50">
