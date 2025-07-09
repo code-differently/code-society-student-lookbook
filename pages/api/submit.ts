@@ -15,6 +15,10 @@ type ResponseData = {
   success: boolean
   message: string
   redirectUrl?: string
+  errorType?: string
+  receivedType?: string
+  details?: string
+  errorField?: string
 }
 
 const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
@@ -54,18 +58,66 @@ export default async function handler(
 
   form.parse(req, async (err: any, fields: Fields, files: Files) => {
     if (err) {
-      return res.status(400).json({ success: false, message: 'File upload error' })
+      console.error('Formidable parse error:', err)
+      let errorMessage = `File upload error: ${err.message}`
+      let errorField = 'general'
+      
+      if (err.message.includes('maxFileSize')) {
+        errorMessage = 'File size exceeds 10MB limit. Please choose smaller files.'
+        errorField = 'file_size'
+      } else if (err.message.includes('parse')) {
+        errorMessage = 'Invalid file format. Please check your file types.'
+        errorField = 'file_format'
+      }
+      
+      return res.status(400).json({ 
+        success: false, 
+        message: errorMessage,
+        errorType: 'parse_error',
+        errorField: errorField
+      })
     }
 
-    // Handle resume file
+    console.log('Files received:', Object.keys(files))
+    console.log('Fields received:', Object.keys(fields))
+
+    // Handle resume file with detailed logging
     const resumeFileRaw = files.resume
+    console.log('Resume file raw:', resumeFileRaw)
+    
+    if (resumeFileRaw && !Array.isArray(resumeFileRaw) && (resumeFileRaw as File).mimetype !== 'application/pdf') {
+      console.error('Resume file type error:', (resumeFileRaw as File).mimetype)
+      return res.status(400).json({
+        success: false,
+        message: 'Resume must be a PDF file. Please upload a PDF document.',
+        errorType: 'resume_file_type',
+        errorField: 'resume',
+        receivedType: (resumeFileRaw as File).mimetype || undefined
+      })
+    }
+    
     const resumeFile = Array.isArray(resumeFileRaw) ? resumeFileRaw[0] : resumeFileRaw
     const resumeUrl = resumeFile ? `/uploads/${path.basename(resumeFile.filepath)}` : ''
+    console.log('Resume URL:', resumeUrl)
 
-    // Handle headshot file
+    // Handle headshot file with detailed logging
     const headshotFileRaw = files.headshot
+    console.log('Headshot file raw:', headshotFileRaw)
+    
+    if (headshotFileRaw && !Array.isArray(headshotFileRaw) && !(headshotFileRaw as File).mimetype?.startsWith('image/')) {
+      console.error('Headshot file type error:', (headshotFileRaw as File).mimetype)
+      return res.status(400).json({
+        success: false,
+        message: 'Headshot must be an image file (JPG, PNG, etc.). Please upload a photo.',
+        errorType: 'headshot_file_type',
+        errorField: 'headshot',
+        receivedType: (headshotFileRaw as File).mimetype || undefined
+      })
+    }
+    
     const headshotFile = Array.isArray(headshotFileRaw) ? headshotFileRaw[0] : headshotFileRaw
     const headshotUrl = headshotFile ? `/uploads/${path.basename(headshotFile.filepath)}` : null
+    console.log('Headshot URL:', headshotUrl)
 
     try {
       const student = await prisma.student.create({
@@ -77,11 +129,18 @@ export default async function handler(
           professionalStatement: getFirstField(fields.professionalStatement) ?? '',
           resumeUrl,
           headshotUrl,
+          yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
+          educationDegree: getFirstField(fields.educationDegree) ?? null,
+          educationField: getFirstField(fields.educationField) ?? null,
           technicalSkills: {
             create: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]').map((skill: string) => ({ name: skill })),
           },
           certifications: {
-            create: JSON.parse(getFirstField(fields.certifications) ?? '[]').map((cert: string) => ({ name: cert })),
+            create: JSON.parse(getFirstField(fields.certifications) ?? '[]').map((cert: any) =>
+              typeof cert === 'string'
+                ? { name: cert, status: null }
+                : { name: cert.name, status: cert.status ?? null }
+            ),
           },
           careerInterests: {
             create: JSON.parse(getFirstField(fields.careerInterests) ?? '[]').map((interest: string) => ({ name: interest })),
@@ -105,12 +164,35 @@ export default async function handler(
         return res.status(400).json({
           success: false,
           message: 'A student with this email address has already submitted the form',
+          errorType: 'duplicate_email'
+        })
+      }
+
+      // Check for validation errors
+      if (error.code === 'P2000') {
+        return res.status(400).json({
+          success: false,
+          message: 'Data validation error - please check your input',
+          errorType: 'validation_error',
+          details: error.message
+        })
+      }
+
+      // Check for JSON parsing errors
+      if (error instanceof SyntaxError) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid form data format',
+          errorType: 'json_parse_error',
+          details: error.message
         })
       }
 
       return res.status(500).json({
         success: false,
         message: 'Error submitting form',
+        errorType: 'database_error',
+        details: error.message
       })
     }
   })

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,50 +8,54 @@ datasource db {
 }
 
 model Student {
-  id               String            @id @default(uuid())
-  fullName         String
-  email            String            @unique
-  linkedinUrl      String?
-  githubUrl        String?
+  id                    String           @id @default(uuid())
+  fullName              String
+  email                 String           @unique
+  linkedinUrl           String?
+  githubUrl             String?
   professionalStatement String
-  resumeUrl        String?
-  headshotUrl      String?
-  technicalSkills  TechnicalSkill[]
-  certifications   Certification[]
-  careerInterests  CareerInterest[]
-  workExperience   WorkExperience[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  resumeUrl             String?
+  headshotUrl           String?
+  yearsOfExperience     String?
+  educationDegree       String?
+  educationField        String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  careerInterests       CareerInterest[]
+  certifications        Certification[]
+  technicalSkills       TechnicalSkill[]
+  workExperience        WorkExperience[]
 }
 
 model TechnicalSkill {
   id        String   @id @default(uuid())
   name      String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
   createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model Certification {
   id        String   @id @default(uuid())
   name      String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
   createdAt DateTime @default(now())
+  status    String?
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model CareerInterest {
   id        String   @id @default(uuid())
   name      String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
   createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 model WorkExperience {
   id        String   @id @default(uuid())
   name      String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
   createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

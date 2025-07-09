@@ -199,6 +199,16 @@ function generateProfilesHTML(students: any[]) {
             </div>
 
             <div class="section">
+                <h3>Education</h3>
+                <p>${student.educationDegree || '—'}${student.educationField ? ` in ${student.educationField}` : ''}</p>
+            </div>
+
+            <div class="section">
+                <h3>Years of Experience</h3>
+                <p>${student.yearsOfExperience || '—'}</p>
+            </div>
+
+            <div class="section">
                 <h3>Technical Skills (${student.technicalSkills.length})</h3>
                 <div class="tags">
                     ${student.technicalSkills.map((skill: { name: string }) => `<span class="tag">${skill.name}</span>`).join('')}
@@ -208,7 +218,7 @@ function generateProfilesHTML(students: any[]) {
             <div class="section">
                 <h3>Certifications (${student.certifications.length})</h3>
                 <div class="tags">
-                    ${student.certifications.map((cert: { name: string }) => `<span class="tag certification">${cert.name}</span>`).join('')}
+                    ${student.certifications.map((cert: { name: string, status?: string }) => `<span class="tag certification">${cert.name}${cert.status ? ` <span style='font-size:11px;font-weight:normal;'>(${cert.status})</span>` : ''}</span>`).join('')}
                 </div>
             </div>
 
