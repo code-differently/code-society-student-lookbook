@@ -51,6 +51,7 @@ interface FormData {
   certifications: CertificationWithStatus[]
   careerInterests: string[]
   workExperience: string[]
+  volunteerExperience: string[]
   yearsOfExperience: string
   educationDegree: string
   educationField: string
@@ -72,6 +73,7 @@ export default function Home() {
     certifications: [],
     careerInterests: [],
     workExperience: [],
+    volunteerExperience: [],
     yearsOfExperience: '',
     educationDegree: '',
     educationField: '',
@@ -129,6 +131,7 @@ export default function Home() {
       form.append('certifications', JSON.stringify(formData.certifications))
       form.append('careerInterests', JSON.stringify(formData.careerInterests))
       form.append('workExperience', JSON.stringify(formData.workExperience))
+      form.append('volunteerExperience', JSON.stringify(formData.volunteerExperience))
 
       const response = await fetch('/api/submit', {
         method: 'POST',
@@ -405,7 +408,7 @@ export default function Home() {
           <FormControl isInvalid={!!errors.certifications}>
             <FormLabel>Certifications (Select at least one)</FormLabel>
             <Stack>
-              {['Scrum', 'AWS', 'Google IT', 'CompTIA', 'Responsive Web Design', 'None'].map((cert) => (
+              {['Scrum', 'AWS', 'Google IT', 'CompTIA', 'CompTIA AI Essentials', 'Responsive Web Design', 'None'].map((cert) => (
                 <Checkbox
                   key={cert}
                   isChecked={formData.certifications.some(c => c.name === cert)}
@@ -487,7 +490,7 @@ export default function Home() {
           <FormControl isInvalid={!!errors.careerInterests}>
             <FormLabel>Career Interests (Select at least one)</FormLabel>
             <Stack>
-              {['Frontend', 'Backend', 'Full Stack', 'Cybersecurity', 'UI/UX', 'QA', 'DevOps', 'Flexible/Open'].map((interest) => (
+              {['Frontend', 'Backend', 'Full Stack', 'Cybersecurity', 'UI/UX', 'QA', 'DevOps', 'Data Analyst', 'Tech Writer', 'Flexible/Open'].map((interest) => (
                 <Checkbox
                   key={interest}
                   isChecked={formData.careerInterests.includes(interest)}
@@ -570,6 +573,9 @@ export default function Home() {
                 'Military',
                 'Tech Support',
                 'Freelance',
+                'Finance (Banking)',
+                'Sales',
+                'Other',
               ].map((exp) => (
                 <Checkbox
                   key={exp}
@@ -631,6 +637,88 @@ export default function Home() {
                           transition="all 0.2s"
                         >
                           <TagLabel>{exp}</TagLabel>
+                          <TagCloseButton />
+                        </Tag>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                </Box>
+              )}
+            </Stack>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Volunteer Experience</FormLabel>
+            <Stack>
+              {[
+                'Community Service',
+                'Non-profit Organizations',
+                'Religious Organizations',
+                'Youth Programs',
+                'Environmental Causes',
+                'Education/Tutoring',
+                'Healthcare/Medical',
+                'Animal Welfare',
+                'Disaster Relief',
+                'Sports/Recreation',
+              ].map((volunteer) => (
+                <Checkbox
+                  key={volunteer}
+                  isChecked={formData.volunteerExperience.includes(volunteer)}
+                  onChange={(e) => {
+                    const volunteers = e.target.checked
+                      ? [...formData.volunteerExperience, volunteer]
+                      : formData.volunteerExperience.filter((v) => v !== volunteer)
+                    setFormData({ ...formData, volunteerExperience: volunteers })
+                  }}
+                  _hover={{ transform: 'translateX(4px)' }}
+                  transition="all 0.2s"
+                >
+                  {volunteer}
+                </Checkbox>
+              ))}
+              <Box>
+                <Input
+                  placeholder="Other volunteer experience (press Enter to add)"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const input = e.target as HTMLInputElement
+                      const value = input.value.trim()
+                      if (value && !formData.volunteerExperience.includes(value)) {
+                        setFormData({
+                          ...formData,
+                          volunteerExperience: [...formData.volunteerExperience, value],
+                        })
+                        input.value = ''
+                      }
+                    }
+                  }}
+                  _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+                />
+              </Box>
+              {formData.volunteerExperience.length > 0 && (
+                <Box mt={2}>
+                  <Text fontSize="sm" fontWeight="bold">Selected Volunteer Experience:</Text>
+                  <Wrap mt={1}>
+                    {formData.volunteerExperience.map((volunteer) => (
+                      <WrapItem key={volunteer}>
+                        <Tag
+                          size="md"
+                          borderRadius="full"
+                          variant="solid"
+                          colorScheme="teal"
+                          cursor="pointer"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              volunteerExperience: formData.volunteerExperience.filter((v) => v !== volunteer),
+                            })
+                          }}
+                          _hover={{ transform: 'scale(1.05)' }}
+                          transition="all 0.2s"
+                        >
+                          <TagLabel>{volunteer}</TagLabel>
                           <TagCloseButton />
                         </Tag>
                       </WrapItem>

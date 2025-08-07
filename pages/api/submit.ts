@@ -148,6 +148,9 @@ export default async function handler(
           workExperience: {
             create: JSON.parse(getFirstField(fields.workExperience) ?? '[]').map((exp: string) => ({ name: exp })),
           },
+          volunteerExperience: {
+            create: JSON.parse(getFirstField(fields.volunteerExperience) ?? '[]').map((volunteer: string) => ({ name: volunteer })),
+          },
         },
       })
 
