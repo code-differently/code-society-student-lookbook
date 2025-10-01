@@ -43,25 +43,7 @@ import {
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon, DownloadIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import FilterPanel, { FilterState } from '../components/FilterPanel'
 import NextImage from 'next/image'
-
-interface Submission {
-  id: string
-  fullName: string
-  email: string
-  linkedinUrl: string | null
-  githubUrl: string | null
-  professionalStatement: string
-  resumeUrl: string
-  headshotUrl?: string 
-  yearsOfExperience?: string | null
-  educationDegree?: string | null
-  educationField?: string | null
-  technicalSkills: { name: string }[]
-  certifications: { name: string, status?: string | null }[]
-  careerInterests: { name: string }[]
-  workExperience: { name: string }[]
-  createdAt: string
-}
+import { Submission } from '@/interfaces/Submission'
 
 interface ApiResponse {
   submissions: Submission[]
@@ -233,13 +215,6 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               <Divider my={4} />
               <Stack divider={<StackDivider />} spacing={4}>
                 <Box>
-                  <Text fontWeight="600" mb={2} color="gray.700">Professional Statement</Text>
-                  <Text color="gray.600" fontSize="sm" lineHeight="1.6">
-                    {submission.professionalStatement}
-                  </Text>
-                </Box>
-
-                <Box>
                   <Text fontWeight="600" mb={2} color="gray.700">Education</Text>
                   <Text color="gray.600" fontSize="sm">
                     {submission.educationDegree || '—'}{submission.educationField ? ` in ${submission.educationField}` : ''}
@@ -257,9 +232,9 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   <Text fontWeight="600" mb={3} color="gray.700">Technical Skills</Text>
                   <Wrap spacing={2}>
                   {submission.technicalSkills.map((skill) => (
-                    <WrapItem key={skill.name}>
+                    <WrapItem key={typeof skill === 'string' ? skill : skill.id}>
                         <Badge colorScheme="blue" variant="solid" px={2} py={1} borderRadius="md">
-                          {skill.name}
+                          {typeof skill === 'string' ? skill : skill.name}
                         </Badge>
                     </WrapItem>
                   ))}
@@ -288,9 +263,9 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   <Text fontWeight="600" mb={3} color="gray.700">Career Interests</Text>
                   <Wrap spacing={2}>
                   {submission.careerInterests.map((interest) => (
-                    <WrapItem key={interest.name}>
+                    <WrapItem key={typeof interest === 'string' ? interest : interest.id}>
                         <Badge colorScheme="purple" variant="solid" px={2} py={1} borderRadius="md">
-                          {interest.name}
+                          {typeof interest === 'string' ? interest : interest.name}
                         </Badge>
                     </WrapItem>
                   ))}
@@ -301,9 +276,9 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   <Text fontWeight="600" mb={3} color="gray.700">Work Experience</Text>
                   <Wrap spacing={2}>
                   {submission.workExperience.map((exp) => (
-                    <WrapItem key={exp.name}>
+                    <WrapItem key={typeof exp === 'string' ? exp : exp.id}>
                         <Badge colorScheme="orange" variant="solid" px={2} py={1} borderRadius="md">
-                          {exp.name}
+                          {typeof exp === 'string' ? exp : exp.name}
                         </Badge>
                     </WrapItem>
                   ))}

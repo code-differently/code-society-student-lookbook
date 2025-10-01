@@ -33,39 +33,17 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { ChevronDownIcon } from '@chakra-ui/icons'
-
-interface CertificationWithStatus {
-  name: string
-  status?: string
-}
-
-interface FormData {
-  fullName: string
-  email: string
-  linkedinUrl: string
-  githubUrl: string
-  professionalStatement: string
-  resume: File | null
-  headshot: File | null
-  technicalSkills: string[]
-  certifications: CertificationWithStatus[]
-  careerInterests: string[]
-  workExperience: string[]
-  yearsOfExperience: string
-  educationDegree: string
-  educationField: string
-}
+import { StudentFormData } from '@/interfaces/StudentFormData'
 
 export default function Home() {
   const router = useRouter()
   const toast = useToast()
   const [activeSection, setActiveSection] = useState<string>('personal')
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<StudentFormData>({
     fullName: '',
     email: '',
     linkedinUrl: '',
     githubUrl: '',
-    professionalStatement: '',
     resume: null,
     headshot: null,
     technicalSkills: [],
@@ -115,7 +93,6 @@ export default function Home() {
       form.append('email', formData.email)
       form.append('linkedinUrl', formData.linkedinUrl)
       form.append('githubUrl', formData.githubUrl)
-      form.append('professionalStatement', formData.professionalStatement)
       if (formData.resume) {
         form.append('resume', formData.resume)
       }
@@ -247,15 +224,6 @@ export default function Home() {
               type="url"
               value={formData.githubUrl}
               onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
-              _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-            />
-          </FormControl>
-
-          <FormControl isRequired>
-            <FormLabel>Professional Statement</FormLabel>
-            <Textarea
-              value={formData.professionalStatement}
-              onChange={(e) => setFormData({ ...formData, professionalStatement: e.target.value })}
               _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
             />
           </FormControl>

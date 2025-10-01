@@ -194,11 +194,6 @@ function generateProfilesHTML(students: any[]) {
             </div>
 
             <div class="section">
-                <h3>Professional Statement</h3>
-                <div class="statement">${student.professionalStatement}</div>
-            </div>
-
-            <div class="section">
                 <h3>Education</h3>
                 <p>${student.educationDegree || '—'}${student.educationField ? ` in ${student.educationField}` : ''}</p>
             </div>
@@ -211,7 +206,7 @@ function generateProfilesHTML(students: any[]) {
             <div class="section">
                 <h3>Technical Skills (${student.technicalSkills.length})</h3>
                 <div class="tags">
-                    ${student.technicalSkills.map((skill: { name: string }) => `<span class="tag">${skill.name}</span>`).join('')}
+                    ${student.technicalSkills.map((skill : string) => `<span class="tag">${skill}</span>`).join('')}
                 </div>
             </div>
 
@@ -225,14 +220,14 @@ function generateProfilesHTML(students: any[]) {
             <div class="section">
                 <h3>Career Interests (${student.careerInterests.length})</h3>
                 <div class="tags">
-                    ${student.careerInterests.map((interest: { name: string }) => `<span class="tag interest">${interest.name}</span>`).join('')}
+                    ${student.careerInterests.map((interest: string) => `<span class="tag interest">${interest}</span>`).join('')}
                 </div>
             </div>
 
             <div class="section">
                 <h3>Work Experience (${student.workExperience.length})</h3>
                 <div class="tags">
-                    ${student.workExperience.map((exp: { name: string }) => `<span class="tag experience">${exp.name}</span>`).join('')}
+                    ${student.workExperience.map((exp: string) => `<span class="tag experience">${exp}</span>`).join('')}
                 </div>
             </div>
 
