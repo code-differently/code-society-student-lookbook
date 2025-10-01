@@ -31,14 +31,30 @@ import {
   AccordionPanel,
   AccordionIcon,
   Icon,
+  Select,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuItemOption,
+  MenuGroup,
+  MenuOptionGroup,
+  MenuDivider,
 } from '@chakra-ui/react'
 import { ChevronDownIcon } from '@chakra-ui/icons'
 import { StudentFormData } from '@/interfaces/StudentFormData'
+import { EducationOptions } from '@/filters/EducationOptions'
+import { FieldOfStudyOptions } from '@/filters/FieldOfStudyOptions'
+import { SkillCategories } from '@/filters/SkillCategories'
+import { CertificationOptions } from '@/filters/CertificationOptions'
+import { CareerInterestOptions } from '@/filters/CareerInterestOptions'
+import { WorkExperienceOptions } from '@/filters/WorkExperienceOptions'
 
 export default function Home() {
   const router = useRouter()
   const toast = useToast()
   const [activeSection, setActiveSection] = useState<string>('personal')
+
   const [formData, setFormData] = useState<StudentFormData>({
     fullName: '',
     email: '',
@@ -51,7 +67,7 @@ export default function Home() {
     careerInterests: [],
     workExperience: [],
     yearsOfExperience: '',
-    educationDegree: '',
+    educationDegree: [],
     educationField: '',
   })
 
@@ -101,7 +117,7 @@ export default function Home() {
       }
       form.append('technicalSkills', JSON.stringify(formData.technicalSkills))
       form.append('yearsOfExperience', formData.yearsOfExperience)
-      form.append('educationDegree', formData.educationDegree)
+      form.append('educationDegree', JSON.stringify(formData.educationDegree))
       form.append('educationField', formData.educationField)
       form.append('certifications', JSON.stringify(formData.certifications))
       form.append('careerInterests', JSON.stringify(formData.careerInterests))
@@ -246,23 +262,89 @@ export default function Home() {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Education Degree</FormLabel>
-            <Input
-              placeholder="e.g. Bachelor's, Bootcamp Graduate"
-              value={formData.educationDegree}
-              onChange={e => setFormData({ ...formData, educationDegree: e.target.value })}
-              _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-            />
+            <FormLabel>Education Background (Select all that apply)</FormLabel>
+            <Menu closeOnSelect={false}>
+              <MenuButton
+                as={Button}
+                rightIcon={<ChevronDownIcon />}
+                width="100%"
+                textAlign="left"
+                fontWeight="normal"
+                bg="white"
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: 'blue.500' }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              >
+                {formData.educationDegree.length > 0 
+                  ? `${formData.educationDegree.length} selected` 
+                  : 'Select education background'}
+              </MenuButton>
+              <MenuList maxHeight="200px" overflowY="auto">
+                <MenuOptionGroup type="checkbox">
+                  {EducationOptions.map((option) => (
+                    <MenuItemOption
+                      key={option}
+                      value={option}
+                      isChecked={formData.educationDegree.includes(option)}
+                      onClick={() => {
+                        const degrees = formData.educationDegree.includes(option)
+                          ? formData.educationDegree.filter(d => d !== option)
+                          : [...formData.educationDegree, option]
+                        setFormData({ ...formData, educationDegree: degrees })
+                      }}
+                    >
+                      {option}
+                    </MenuItemOption>
+                  ))}
+                </MenuOptionGroup>
+              </MenuList>
+            </Menu>
+            {formData.educationDegree.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" fontWeight="bold">Selected Education:</Text>
+                <Wrap mt={1}>
+                  {formData.educationDegree.map((degree) => (
+                    <WrapItem key={degree}>
+                      <Tag
+                        size="md"
+                        borderRadius="full"
+                        variant="solid"
+                        colorScheme="teal"
+                        cursor="pointer"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            educationDegree: formData.educationDegree.filter((d) => d !== degree),
+                          })
+                        }}
+                        _hover={{ transform: 'scale(1.05)' }}
+                        transition="all 0.2s"
+                      >
+                        <TagLabel>{degree}</TagLabel>
+                        <TagCloseButton />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
+            )}
           </FormControl>
 
           <FormControl isRequired>
             <FormLabel>Field of Study</FormLabel>
-            <Input
-              placeholder="e.g. Computer Science, Business"
+            <Select
+              placeholder="Select your field of study"
               value={formData.educationField}
               onChange={e => setFormData({ ...formData, educationField: e.target.value })}
               _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-            />
+            >
+              {FieldOfStudyOptions.map((field) => (
+                <option key={field} value={field}>
+                  {field}
+                </option>
+              ))}
+            </Select>
           </FormControl>
         </VStack>
       ),
@@ -295,155 +377,198 @@ export default function Home() {
       title: 'Technical Skills & Certifications',
       description: 'Tell us about your technical expertise',
       fields: (
-        <VStack spacing={6} align="stretch">
+        <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.100">
+          <VStack spacing={6} align="stretch">
           <FormControl isInvalid={!!errors.technicalSkills}>
             <FormLabel>Technical Skills (Select at least one)</FormLabel>
-            <Stack>
-              {['HTML', 'CSS', 'JavaScript', 'Python', 'Java', 'React', 'Node.js', 'SQL'].map((skill) => (
-                <Checkbox
-                  key={skill}
-                  isChecked={formData.technicalSkills.includes(skill)}
-                  onChange={(e) => {
-                    const skills = e.target.checked
-                      ? [...formData.technicalSkills, skill]
-                      : formData.technicalSkills.filter((s) => s !== skill)
-                    setFormData({ ...formData, technicalSkills: skills })
-                  }}
-                  _hover={{ transform: 'translateX(4px)' }}
-                  transition="all 0.2s"
-                >
-                  {skill}
-                </Checkbox>
-              ))}
-              <Box>
-                <Input
-                  placeholder="Other skills (press Enter to add)"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const input = e.target as HTMLInputElement
-                      const value = input.value.trim()
-                      if (value && !formData.technicalSkills.includes(value)) {
-                        setFormData({
-                          ...formData,
-                          technicalSkills: [...formData.technicalSkills, value],
-                        })
-                        input.value = ''
-                      }
-                    }
-                  }}
-                  _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-                />
-              </Box>
-              {errors.technicalSkills && (
-                <FormErrorMessage>{errors.technicalSkills}</FormErrorMessage>
-              )}
-              {formData.technicalSkills.length > 0 && (
-                <Box mt={2}>
-                  <Text fontSize="sm" fontWeight="bold">Selected Skills:</Text>
-                  <Wrap mt={1}>
-                    {formData.technicalSkills.map((skill) => (
-                      <WrapItem key={skill}>
-                        <Tag
-                          size="md"
-                          borderRadius="full"
-                          variant="solid"
-                          colorScheme="blue"
-                          cursor="pointer"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              technicalSkills: formData.technicalSkills.filter((s) => s !== skill),
-                            })
-                          }}
-                          _hover={{ transform: 'scale(1.05)' }}
-                          transition="all 0.2s"
-                        >
-                          <TagLabel>{skill}</TagLabel>
-                          <TagCloseButton />
-                        </Tag>
-                      </WrapItem>
+            <Menu closeOnSelect={false}>
+              <MenuButton
+                as={Button}
+                rightIcon={<ChevronDownIcon />}
+                width="100%"
+                textAlign="left"
+                fontWeight="normal"
+                bg="white"
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: 'blue.500' }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              >
+                {formData.technicalSkills.length > 0 
+                  ? `${formData.technicalSkills.length} skills selected` 
+                  : 'Select technical skills'}
+              </MenuButton>
+              <MenuList maxHeight="300px" overflowY="auto">
+                {Object.entries(SkillCategories).map(([category, skills]) => (
+                  <MenuGroup key={category} title={category}>
+                    {skills.map((skill) => (
+                      <MenuItemOption
+                        key={skill}
+                        value={skill}
+                        isChecked={formData.technicalSkills.includes(skill)}
+                        onClick={() => {
+                          const updatedSkills = formData.technicalSkills.includes(skill)
+                            ? formData.technicalSkills.filter(s => s !== skill)
+                            : [...formData.technicalSkills, skill]
+                          setFormData({ ...formData, technicalSkills: updatedSkills })
+                        }}
+                      >
+                        {skill}
+                      </MenuItemOption>
                     ))}
-                  </Wrap>
-                </Box>
-              )}
-            </Stack>
+                    <MenuDivider />
+                  </MenuGroup>
+                ))}
+              </MenuList>
+            </Menu>
+            <Box mt={2}>
+              <Input
+                placeholder="Add custom skill (press Enter)"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
+                    const value = input.value.trim()
+                    if (value && !formData.technicalSkills.includes(value)) {
+                      setFormData({
+                        ...formData,
+                        technicalSkills: [...formData.technicalSkills, value],
+                      })
+                      input.value = ''
+                    }
+                  }
+                }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              />
+            </Box>
+            {errors.technicalSkills && (
+              <FormErrorMessage>{errors.technicalSkills}</FormErrorMessage>
+            )}
+            {formData.technicalSkills.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" fontWeight="bold">Selected Skills:</Text>
+                <Wrap mt={1}>
+                  {formData.technicalSkills.map((skill) => (
+                    <WrapItem key={skill}>
+                      <Tag
+                        size="md"
+                        borderRadius="full"
+                        variant="solid"
+                        colorScheme="blue"
+                        cursor="pointer"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            technicalSkills: formData.technicalSkills.filter((s) => s !== skill),
+                          })
+                        }}
+                        _hover={{ transform: 'scale(1.05)' }}
+                        transition="all 0.2s"
+                      >
+                        <TagLabel>{skill}</TagLabel>
+                        <TagCloseButton />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
+            )}
           </FormControl>
 
           <FormControl isInvalid={!!errors.certifications}>
             <FormLabel>Certifications (Select at least one)</FormLabel>
-            <Stack>
-              {['Scrum', 'AWS', 'Google IT', 'CompTIA', 'Responsive Web Design', 'None'].map((cert) => (
-                <Checkbox
-                  key={cert}
-                  isChecked={formData.certifications.some(c => c.name === cert)}
-                  onChange={(e) => {
-                    const certs = e.target.checked
-                      ? [...formData.certifications, { name: cert, status: 'Completed' }]
-                      : formData.certifications.filter((c) => c.name !== cert)
-                    setFormData({ ...formData, certifications: certs })
-                  }}
-                  _hover={{ transform: 'translateX(4px)' }}
-                  transition="all 0.2s"
-                >
-                  {cert}
-                </Checkbox>
-              ))}
-              <Box>
-                <Input
-                  placeholder="Other certifications (press Enter to add)"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const input = e.target as HTMLInputElement
-                      const value = input.value.trim()
-                      if (value && !formData.certifications.some(c => c.name === value)) {
-                        setFormData({
-                          ...formData,
-                          certifications: [...formData.certifications, { name: value, status: 'Completed' }],
-                        })
-                        input.value = ''
-                      }
+            <Menu closeOnSelect={false}>
+              <MenuButton
+                as={Button}
+                rightIcon={<ChevronDownIcon />}
+                width="100%"
+                textAlign="left"
+                fontWeight="normal"
+                bg="white"
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: 'blue.500' }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              >
+                {formData.certifications.length > 0 
+                  ? `${formData.certifications.length} certifications selected` 
+                  : 'Select certifications'}
+              </MenuButton>
+              <MenuList maxHeight="300px" overflowY="auto">
+                <MenuOptionGroup type="checkbox">
+                  {CertificationOptions.map((cert) => (
+                    <MenuItemOption
+                      key={cert}
+                      value={cert}
+                      isChecked={formData.certifications.some(c => c.name === cert)}
+                      onClick={() => {
+                        const certs = formData.certifications.some(c => c.name === cert)
+                          ? formData.certifications.filter((c) => c.name !== cert)
+                          : [...formData.certifications, { name: cert, status: 'Completed' }]
+                        setFormData({ ...formData, certifications: certs })
+                      }}
+                    >
+                      {cert}
+                    </MenuItemOption>
+                  ))}
+                </MenuOptionGroup>
+              </MenuList>
+            </Menu>
+            <Box mt={2}>
+              <Input
+                placeholder="Add custom certification (press Enter)"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
+                    const value = input.value.trim()
+                    if (value && !formData.certifications.some(c => c.name === value)) {
+                      setFormData({
+                        ...formData,
+                        certifications: [...formData.certifications, { name: value, status: 'Completed' }],
+                      })
+                      input.value = ''
                     }
-                  }}
-                  _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-                />
+                  }
+                }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              />
+            </Box>
+            {errors.certifications && (
+              <FormErrorMessage>{errors.certifications}</FormErrorMessage>
+            )}
+            {formData.certifications.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" fontWeight="bold">Selected Certifications:</Text>
+                <Wrap mt={1}>
+                  {formData.certifications.map((cert) => (
+                    <WrapItem key={cert.name}>
+                      <Tag
+                        size="md"
+                        borderRadius="full"
+                        variant="solid"
+                        colorScheme="green"
+                        cursor="pointer"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            certifications: formData.certifications.filter((c) => c.name !== cert.name),
+                          })
+                        }}
+                        _hover={{ transform: 'scale(1.05)' }}
+                        transition="all 0.2s"
+                      >
+                        <TagLabel>{cert.name}</TagLabel>
+                        <TagCloseButton />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
               </Box>
-              {errors.certifications && (
-                <FormErrorMessage>{errors.certifications}</FormErrorMessage>
-              )}
-              {formData.certifications.length > 0 && (
-                <Box mt={2}>
-                  <Text fontSize="sm" fontWeight="bold">Selected Certifications:</Text>
-                  <Wrap mt={1}>
-                    {formData.certifications.map((cert) => (
-                      <WrapItem key={cert.name}>
-                        <Tag
-                          size="md"
-                          borderRadius="full"
-                          variant="solid"
-                          colorScheme="green"
-                          cursor="pointer"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              certifications: formData.certifications.filter((c) => c.name !== cert.name),
-                            })
-                          }}
-                          _hover={{ transform: 'scale(1.05)' }}
-                          transition="all 0.2s"
-                        >
-                          <TagLabel>{cert.name}</TagLabel>
-                          <TagCloseButton />
-                        </Tag>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
-              )}
-            </Stack>
+            )}
           </FormControl>
         </VStack>
+        </Box>
       ),
     },
     {
@@ -451,162 +576,192 @@ export default function Home() {
       title: 'Career Information',
       description: 'Tell us about your career goals and experience',
       fields: (
-        <VStack spacing={6} align="stretch">
+        <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.100">
+          <VStack spacing={6} align="stretch">
           <FormControl isInvalid={!!errors.careerInterests}>
             <FormLabel>Career Interests (Select at least one)</FormLabel>
-            <Stack>
-              {['Frontend', 'Backend', 'Full Stack', 'Cybersecurity', 'UI/UX', 'QA', 'DevOps', 'Flexible/Open'].map((interest) => (
-                <Checkbox
-                  key={interest}
-                  isChecked={formData.careerInterests.includes(interest)}
-                  onChange={(e) => {
-                    const interests = e.target.checked
-                      ? [...formData.careerInterests, interest]
-                      : formData.careerInterests.filter((i) => i !== interest)
-                    setFormData({ ...formData, careerInterests: interests })
-                  }}
-                  _hover={{ transform: 'translateX(4px)' }}
-                  transition="all 0.2s"
-                >
-                  {interest}
-                </Checkbox>
-              ))}
-              <Box>
-                <Input
-                  placeholder="Other interests (press Enter to add)"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const input = e.target as HTMLInputElement
-                      const value = input.value.trim()
-                      if (value && !formData.careerInterests.includes(value)) {
-                        setFormData({
-                          ...formData,
-                          careerInterests: [...formData.careerInterests, value],
-                        })
-                        input.value = ''
-                      }
+            <Menu closeOnSelect={false}>
+              <MenuButton
+                as={Button}
+                rightIcon={<ChevronDownIcon />}
+                width="100%"
+                textAlign="left"
+                fontWeight="normal"
+                bg="white"
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: 'blue.500' }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              >
+                {formData.careerInterests.length > 0 
+                  ? `${formData.careerInterests.length} interests selected` 
+                  : 'Select career interests'}
+              </MenuButton>
+              <MenuList maxHeight="300px" overflowY="auto">
+                <MenuOptionGroup type="checkbox">
+                  {CareerInterestOptions.map((interest) => (
+                    <MenuItemOption
+                      key={interest}
+                      value={interest}
+                      isChecked={formData.careerInterests.includes(interest)}
+                      onClick={() => {
+                        const interests = formData.careerInterests.includes(interest)
+                          ? formData.careerInterests.filter((i) => i !== interest)
+                          : [...formData.careerInterests, interest]
+                        setFormData({ ...formData, careerInterests: interests })
+                      }}
+                    >
+                      {interest}
+                    </MenuItemOption>
+                  ))}
+                </MenuOptionGroup>
+              </MenuList>
+            </Menu>
+            <Box mt={2}>
+              <Input
+                placeholder="Add custom interest (press Enter)"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
+                    const value = input.value.trim()
+                    if (value && !formData.careerInterests.includes(value)) {
+                      setFormData({
+                        ...formData,
+                        careerInterests: [...formData.careerInterests, value],
+                      })
+                      input.value = ''
                     }
-                  }}
-                  _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-                />
+                  }
+                }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              />
+            </Box>
+            {errors.careerInterests && (
+              <FormErrorMessage>{errors.careerInterests}</FormErrorMessage>
+            )}
+            {formData.careerInterests.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" fontWeight="bold">Selected Interests:</Text>
+                <Wrap mt={1}>
+                  {formData.careerInterests.map((interest) => (
+                    <WrapItem key={interest}>
+                      <Tag
+                        size="md"
+                        borderRadius="full"
+                        variant="solid"
+                        colorScheme="purple"
+                        cursor="pointer"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            careerInterests: formData.careerInterests.filter((i) => i !== interest),
+                          })
+                        }}
+                        _hover={{ transform: 'scale(1.05)' }}
+                        transition="all 0.2s"
+                      >
+                        <TagLabel>{interest}</TagLabel>
+                        <TagCloseButton />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
               </Box>
-              {errors.careerInterests && (
-                <FormErrorMessage>{errors.careerInterests}</FormErrorMessage>
-              )}
-              {formData.careerInterests.length > 0 && (
-                <Box mt={2}>
-                  <Text fontSize="sm" fontWeight="bold">Selected Interests:</Text>
-                  <Wrap mt={1}>
-                    {formData.careerInterests.map((interest) => (
-                      <WrapItem key={interest}>
-                        <Tag
-                          size="md"
-                          borderRadius="full"
-                          variant="solid"
-                          colorScheme="purple"
-                          cursor="pointer"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              careerInterests: formData.careerInterests.filter((i) => i !== interest),
-                            })
-                          }}
-                          _hover={{ transform: 'scale(1.05)' }}
-                          transition="all 0.2s"
-                        >
-                          <TagLabel>{interest}</TagLabel>
-                          <TagCloseButton />
-                        </Tag>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
-              )}
-            </Stack>
+            )}
           </FormControl>
 
           <FormControl isInvalid={!!errors.workExperience}>
             <FormLabel>Past Work Experience (Select at least one)</FormLabel>
-            <Stack>
-              {[
-                'Marketing',
-                'Retail',
-                'Customer Service',
-                'Education',
-                'Healthcare',
-                'Military',
-                'Tech Support',
-                'Freelance',
-              ].map((exp) => (
-                <Checkbox
-                  key={exp}
-                  isChecked={formData.workExperience.includes(exp)}
-                  onChange={(e) => {
-                    const experiences = e.target.checked
-                      ? [...formData.workExperience, exp]
-                      : formData.workExperience.filter((w) => w !== exp)
-                    setFormData({ ...formData, workExperience: experiences })
-                  }}
-                  _hover={{ transform: 'translateX(4px)' }}
-                  transition="all 0.2s"
-                >
-                  {exp}
-                </Checkbox>
-              ))}
-              <Box>
-                <Input
-                  placeholder="Other experience (press Enter to add)"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const input = e.target as HTMLInputElement
-                      const value = input.value.trim()
-                      if (value && !formData.workExperience.includes(value)) {
-                        setFormData({
-                          ...formData,
-                          workExperience: [...formData.workExperience, value],
-                        })
-                        input.value = ''
-                      }
+            <Menu closeOnSelect={false}>
+              <MenuButton
+                as={Button}
+                rightIcon={<ChevronDownIcon />}
+                width="100%"
+                textAlign="left"
+                fontWeight="normal"
+                bg="white"
+                border="1px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: 'blue.500' }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              >
+                {formData.workExperience.length > 0 
+                  ? `${formData.workExperience.length} experiences selected` 
+                  : 'Select work experience'}
+              </MenuButton>
+              <MenuList maxHeight="300px" overflowY="auto">
+                <MenuOptionGroup type="checkbox">
+                  {WorkExperienceOptions.map((exp) => (
+                    <MenuItemOption
+                      key={exp}
+                      value={exp}
+                      isChecked={formData.workExperience.includes(exp)}
+                      onClick={() => {
+                        const experiences = formData.workExperience.includes(exp)
+                          ? formData.workExperience.filter((w) => w !== exp)
+                          : [...formData.workExperience, exp]
+                        setFormData({ ...formData, workExperience: experiences })
+                      }}
+                    >
+                      {exp}
+                    </MenuItemOption>
+                  ))}
+                </MenuOptionGroup>
+              </MenuList>
+            </Menu>
+            <Box mt={2}>
+              <Input
+                placeholder="Add custom experience (press Enter)"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const input = e.target as HTMLInputElement
+                    const value = input.value.trim()
+                    if (value && !formData.workExperience.includes(value)) {
+                      setFormData({
+                        ...formData,
+                        workExperience: [...formData.workExperience, value],
+                      })
+                      input.value = ''
                     }
-                  }}
-                  _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
-                />
+                  }
+                }}
+                _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+              />
+            </Box>
+            {errors.workExperience && (
+              <FormErrorMessage>{errors.workExperience}</FormErrorMessage>
+            )}
+            {formData.workExperience.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" fontWeight="bold">Selected Experience:</Text>
+                <Wrap mt={1}>
+                  {formData.workExperience.map((exp) => (
+                    <WrapItem key={exp}>
+                      <Tag
+                        size="md"
+                        borderRadius="full"
+                        variant="solid"
+                        colorScheme="orange"
+                        cursor="pointer"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            workExperience: formData.workExperience.filter((w) => w !== exp),
+                          })
+                        }}
+                        _hover={{ transform: 'scale(1.05)' }}
+                        transition="all 0.2s"
+                      >
+                        <TagLabel>{exp}</TagLabel>
+                        <TagCloseButton />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
               </Box>
-              {errors.workExperience && (
-                <FormErrorMessage>{errors.workExperience}</FormErrorMessage>
-              )}
-              {formData.workExperience.length > 0 && (
-                <Box mt={2}>
-                  <Text fontSize="sm" fontWeight="bold">Selected Experience:</Text>
-                  <Wrap mt={1}>
-                    {formData.workExperience.map((exp) => (
-                      <WrapItem key={exp}>
-                        <Tag
-                          size="md"
-                          borderRadius="full"
-                          variant="solid"
-                          colorScheme="orange"
-                          cursor="pointer"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              workExperience: formData.workExperience.filter((w) => w !== exp),
-                            })
-                          }}
-                          _hover={{ transform: 'scale(1.05)' }}
-                          transition="all 0.2s"
-                        >
-                          <TagLabel>{exp}</TagLabel>
-                          <TagCloseButton />
-                        </Tag>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </Box>
-              )}
-            </Stack>
+            )}
           </FormControl>
 
           <FormControl isRequired>
@@ -623,6 +778,7 @@ export default function Home() {
             </RadioGroup>
           </FormControl>
         </VStack>
+        </Box>
       ),
     },
   ]
