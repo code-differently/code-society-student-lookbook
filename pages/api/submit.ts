@@ -22,8 +22,16 @@ type ResponseData = {
 }
 
 const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+const headshotsDir = path.join(uploadsDir, 'headshots')
+const resumesDir = path.join(uploadsDir, 'resumes')
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir)
+}
+if (!fs.existsSync(headshotsDir)) {
+  fs.mkdirSync(headshotsDir, { recursive: true })
+}
+if (!fs.existsSync(resumesDir)) {
+  fs.mkdirSync(resumesDir, { recursive: true })
 }
 
 // Helper to get the first value from a field (handles string | string[] | undefined)
@@ -54,6 +62,15 @@ export default async function handler(
       }
       return false
     },
+  })
+
+  // Custom file naming to put files in correct subdirectories
+  form.on('fileBegin', (name, file) => {
+    if (name === 'headshot') {
+      file.filepath = path.join(headshotsDir, file.newFilename || file.originalFilename || 'headshot')
+    } else if (name === 'resume') {
+      file.filepath = path.join(resumesDir, file.newFilename || file.originalFilename || 'resume')
+    }
   })
 
   form.parse(req, async (err: any, fields: Fields, files: Files) => {
@@ -97,7 +114,7 @@ export default async function handler(
     }
     
     const resumeFile = Array.isArray(resumeFileRaw) ? resumeFileRaw[0] : resumeFileRaw
-    const resumeUrl = resumeFile ? `/uploads/${path.basename(resumeFile.filepath)}` : ''
+    const resumeUrl = resumeFile ? `/uploads/resumes/${path.basename(resumeFile.filepath)}` : ''
     console.log('Resume URL:', resumeUrl)
 
     // Handle headshot file with detailed logging
@@ -116,7 +133,7 @@ export default async function handler(
     }
     
     const headshotFile = Array.isArray(headshotFileRaw) ? headshotFileRaw[0] : headshotFileRaw
-    const headshotUrl = headshotFile ? `/uploads/${path.basename(headshotFile.filepath)}` : null
+    const headshotUrl = headshotFile ? `/uploads/headshots/${path.basename(headshotFile.filepath)}?t=${Date.now()}` : null
     console.log('Headshot URL:', headshotUrl)
 
     try {
@@ -126,7 +143,6 @@ export default async function handler(
           email: getFirstField(fields.email) ?? '',
           linkedinUrl: getFirstField(fields.linkedinUrl) ?? '',
           githubUrl: getFirstField(fields.githubUrl) ?? '',
-          professionalStatement: getFirstField(fields.professionalStatement) ?? '',
           resumeUrl,
           headshotUrl,
           yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,

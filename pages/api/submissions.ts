@@ -41,7 +41,6 @@ export default async function handler(
       whereConditions.OR = [
         { fullName: { contains: search as string, mode: 'insensitive' } },
         { email: { contains: search as string, mode: 'insensitive' } },
-        { professionalStatement: { contains: search as string, mode: 'insensitive' } },
       ]
     }
 
@@ -177,14 +176,12 @@ export default async function handler(
         { resumeUrl: { not: { in: [null, ''] } } },
         { linkedinUrl: { not: { in: [null, ''] } } },
         { githubUrl: { not: { in: [null, ''] } } },
-        { professionalStatement: { not: '' } }
       ]
     } else if (profileCompleteness === 'partial') {
       whereConditions.OR = [
         { resumeUrl: { in: [null, ''] } },
         { linkedinUrl: { in: [null, ''] } },
         { githubUrl: { in: [null, ''] } },
-        { professionalStatement: '' }
       ]
     }
 

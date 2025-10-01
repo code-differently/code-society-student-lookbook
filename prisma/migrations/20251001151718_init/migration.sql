@@ -5,9 +5,11 @@ CREATE TABLE "Student" (
     "email" TEXT NOT NULL,
     "linkedinUrl" TEXT,
     "githubUrl" TEXT,
-    "shortBio" TEXT NOT NULL,
-    "resumeUrl" TEXT NOT NULL,
-    "availableForWork" BOOLEAN NOT NULL,
+    "resumeUrl" TEXT,
+    "headshotUrl" TEXT,
+    "yearsOfExperience" TEXT,
+    "educationDegree" TEXT,
+    "educationField" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
@@ -27,6 +29,7 @@ CREATE TABLE "Certification" (
     "name" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" TEXT,
     CONSTRAINT "Certification_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 

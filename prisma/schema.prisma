@@ -13,7 +13,6 @@ model Student {
   email                 String           @unique
   linkedinUrl           String?
   githubUrl             String?
-  professionalStatement String
   resumeUrl             String?
   headshotUrl           String?
   yearsOfExperience     String?
