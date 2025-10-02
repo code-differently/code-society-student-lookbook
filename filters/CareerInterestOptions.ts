@@ -1,0 +1,23 @@
+export const CareerInterestOptions = [
+    "Frontend Development",
+    "Backend Development",
+    "Full Stack Development",
+    "Mobile Development",
+    "DevOps",
+    "Data Science",
+    "Machine Learning",
+    "AI Development",
+    "Cybersecurity",
+    "Cloud Computing",
+    "UI/UX Design",
+    "Product Management",
+    "Quality Assurance",
+    "Database Administration",
+    "Game Development",
+    "Blockchain Development",
+    "IoT Development",
+    "Technical Writing",
+    "System Architecture",
+    "Site Reliability Engineering",
+    "Flexible/Open to All"
+]

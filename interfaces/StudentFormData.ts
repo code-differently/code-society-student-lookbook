@@ -15,6 +15,6 @@ export interface StudentFormData {
   careerInterests: string[]
   workExperience: string[]
   yearsOfExperience: string
-  educationDegree: string
+  educationDegree: string[]
   educationField: string
 }

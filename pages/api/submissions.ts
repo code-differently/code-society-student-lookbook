@@ -30,6 +30,10 @@ export default async function handler(
       profileCompleteness = 'any',
       skillLevel = 'any',
       certificationLevel = 'any',
+      // Education filters
+      yearsOfExperience,
+      educationDegrees,
+      educationField,
       limit = '50',
       offset = '0'
     } = req.query
@@ -185,6 +189,27 @@ export default async function handler(
       ]
     }
 
+    // Years of experience filter
+    if (yearsOfExperience && yearsOfExperience.length > 0) {
+      const expArray = Array.isArray(yearsOfExperience) ? yearsOfExperience : yearsOfExperience.split(',')
+      whereConditions.yearsOfExperience = { in: expArray }
+    }
+
+    // Education degrees filter
+    if (educationDegrees && educationDegrees.length > 0) {
+      const degreeArray = Array.isArray(educationDegrees) ? educationDegrees : educationDegrees.split(',')
+      whereConditions.educationDegrees = {
+        some: {
+          name: { in: degreeArray }
+        }
+      }
+    }
+
+    // Field of study filter
+    if (educationField) {
+      whereConditions.educationField = { contains: educationField as string, mode: 'insensitive' }
+    }
+
     // Build orderBy based on sortBy parameter
     let orderBy: any = { createdAt: 'desc' }
     if (sortBy === 'oldest') {
@@ -202,6 +227,7 @@ export default async function handler(
         certifications: true,
         careerInterests: true,
         workExperience: true,
+        educationDegrees: true,
       },
       orderBy,
       take: parseInt(limit as string),

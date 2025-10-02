@@ -24,7 +24,7 @@ export interface Submission {
   careerInterests: (string | DatabaseItem)[]
   workExperience: (string | DatabaseItem)[]
   yearsOfExperience: string
-  educationDegree: string
+  educationDegrees: DatabaseItem[]
   educationField: string
   createdAt: string
   headshotUrl?: string

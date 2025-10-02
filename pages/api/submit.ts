@@ -146,8 +146,10 @@ export default async function handler(
           resumeUrl,
           headshotUrl,
           yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
-          educationDegree: getFirstField(fields.educationDegree) ?? null,
           educationField: getFirstField(fields.educationField) ?? null,
+          educationDegrees: {
+            create: JSON.parse(getFirstField(fields.educationDegree) ?? '[]').map((degree: string) => ({ name: degree })),
+          },
           technicalSkills: {
             create: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]').map((skill: string) => ({ name: skill })),
           },

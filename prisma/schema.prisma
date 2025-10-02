@@ -16,7 +16,6 @@ model Student {
   resumeUrl             String?
   headshotUrl           String?
   yearsOfExperience     String?
-  educationDegree       String?
   educationField        String?
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
@@ -24,6 +23,7 @@ model Student {
   certifications        Certification[]
   technicalSkills       TechnicalSkill[]
   workExperience        WorkExperience[]
+  educationDegrees      EducationDegree[]
 }
 
 model TechnicalSkill {
@@ -52,6 +52,14 @@ model CareerInterest {
 }
 
 model WorkExperience {
+  id        String   @id @default(uuid())
+  name      String
+  studentId String
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model EducationDegree {
   id        String   @id @default(uuid())
   name      String
   studentId String
