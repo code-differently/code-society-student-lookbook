@@ -1,4 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { EducationOptions } from '@/filters/EducationOptions'
+import { FieldOfStudyOptions } from '@/filters/FieldOfStudyOptions'
+import { SkillCategories } from '@/filters/SkillCategories'
+import { CertificationOptions } from '@/filters/CertificationOptions'
+import { CareerInterestOptions } from '@/filters/CareerInterestOptions'
+import { WorkExperienceOptions } from '@/filters/WorkExperienceOptions'
 import {
   Box,
   VStack,
@@ -78,8 +84,8 @@ export interface FilterState {
   profileCompleteness: 'any' | 'complete' | 'partial'
   skillLevel: 'any' | 'beginner' | 'intermediate' | 'advanced'
   certificationLevel: 'any' | 'entry' | 'professional' | 'expert'
-  yearsOfExperience?: string
-  educationDegree?: string
+  yearsOfExperience?: string[]
+  educationDegrees?: string[]
   educationField?: string
 }
 
@@ -117,45 +123,30 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
     profileCompleteness: 'any',
     skillLevel: 'any',
     certificationLevel: 'any',
-    yearsOfExperience: '',
-    educationDegree: '',
+    yearsOfExperience: [],
+    educationDegrees: [],
     educationField: '',
   })
 
-  const [availableTags, setAvailableTags] = useState<AvailableTags>({
-    skills: [],
-    certifications: [],
-    interests: [],
-    workExperience: []
+  // Flatten skills from categories for the filter options
+  const allSkills = Object.values(SkillCategories).flat()
+
+  const [availableTags] = useState<AvailableTags>({
+    skills: allSkills,
+    certifications: CertificationOptions,
+    interests: CareerInterestOptions,
+    workExperience: WorkExperienceOptions
   })
 
-  const [loadingTags, setLoadingTags] = useState(true)
+  const [loadingTags] = useState(false) // No longer loading since we use static data
   const { isOpen, onToggle, onOpen, onClose } = useDisclosure()
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
   const isMobile = useBreakpointValue({ base: true, md: false })
 
   useEffect(() => {
-    fetchAvailableTags()
-  }, [])
-
-  useEffect(() => {
     onFiltersChange(filters)
   }, [filters, onFiltersChange])
-
-  const fetchAvailableTags = async () => {
-    try {
-      const response = await fetch('/api/tags')
-      if (response.ok) {
-        const data = await response.json()
-        setAvailableTags(data)
-      }
-    } catch (error) {
-      console.error('Error fetching tags:', error)
-    } finally {
-      setLoadingTags(false)
-    }
-  }
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -181,8 +172,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
       profileCompleteness: 'any',
       skillLevel: 'any',
       certificationLevel: 'any',
-      yearsOfExperience: '',
-      educationDegree: '',
+      yearsOfExperience: [],
+      educationDegrees: [],
       educationField: '',
     })
   }
@@ -463,35 +454,43 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
         label="Work Experience"
       />
 
-      {/* Additional Filters */}
-      <FormControl mb={2}>
-        <FormLabel>Years of Experience</FormLabel>
-        <Select
-          placeholder="Any"
-          value={filters.yearsOfExperience}
-          onChange={e => updateFilter('yearsOfExperience', e.target.value)}
-        >
-          <option value="0-3">0-3 years</option>
-          <option value="4-7">4-7 years</option>
-          <option value="8+">8+ years</option>
-        </Select>
-      </FormControl>
-      <FormControl mb={2}>
-        <FormLabel>Education Degree</FormLabel>
-        <Input
-          placeholder="e.g. Bachelor's, Bootcamp Graduate"
-          value={filters.educationDegree}
-          onChange={e => updateFilter('educationDegree', e.target.value)}
-        />
-      </FormControl>
+      {/* Education Background */}
+      <MultiSelect
+        options={EducationOptions}
+        value={filters.educationDegrees || []}
+        onChange={val => updateFilter('educationDegrees', val)}
+        placeholder="Select education background..."
+        colorScheme="teal"
+        label="Education Background"
+      />
+
+      {/* Field of Study */}
       <FormControl mb={2}>
         <FormLabel>Field of Study</FormLabel>
-        <Input
-          placeholder="e.g. Computer Science, Business"
-          value={filters.educationField}
+        <Select
+          placeholder="Any field of study"
+          value={filters.educationField || ''}
           onChange={e => updateFilter('educationField', e.target.value)}
-        />
+        >
+          {FieldOfStudyOptions.map((field) => (
+            <option key={field} value={field}>
+              {field}
+            </option>
+          ))}
+        </Select>
       </FormControl>
+
+      {/* Additional Filters */}
+      <MultiSelect
+        options={['0-3', '4-7', '8+']}
+        value={filters.yearsOfExperience || []}
+        onChange={val => updateFilter('yearsOfExperience', val)}
+        placeholder="Select years of experience..."
+        colorScheme="cyan"
+        label="Years of Experience"
+      />
+
+
 
       {/* Advanced Filters */}
       <Card variant="outline" borderColor="gray.200" bg="gray.50">

@@ -1,0 +1,22 @@
+export const WorkExperienceOptions = [
+    "Agriculture",
+    "Consulting",
+    "Construction",
+    "Customer Service",
+    "Education",
+    "Energy",
+    "Finance",
+    "Food & Beverage",
+    "Government",
+    "Healthcare",
+    "Hospitality",
+    "Legal",
+    "Manufacturing",
+    "Marketing",
+    "Media & Entertainment",
+    "Non-profit",
+    "Real Estate",
+    "Retail",
+    "Technology",
+    "Transportation"
+]

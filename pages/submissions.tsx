@@ -216,9 +216,24 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               <Stack divider={<StackDivider />} spacing={4}>
                 <Box>
                   <Text fontWeight="600" mb={2} color="gray.700">Education</Text>
-                  <Text color="gray.600" fontSize="sm">
-                    {submission.educationDegree || '—'}{submission.educationField ? ` in ${submission.educationField}` : ''}
-                  </Text>
+                  {submission.educationDegrees && submission.educationDegrees.length > 0 ? (
+                    <Wrap spacing={2} mb={2}>
+                      {submission.educationDegrees.map((degree) => (
+                        <WrapItem key={degree.id}>
+                          <Badge colorScheme="teal" variant="solid" px={2} py={1} borderRadius="md">
+                            {degree.name}
+                          </Badge>
+                        </WrapItem>
+                      ))}
+                    </Wrap>
+                  ) : (
+                    <Text color="gray.600" fontSize="sm">No education background specified</Text>
+                  )}
+                  {submission.educationField && (
+                    <Text color="gray.600" fontSize="sm" mt={1}>
+                      Field of Study: {submission.educationField}
+                    </Text>
+                  )}
                 </Box>
 
               <Box>
@@ -409,6 +424,9 @@ export default function Submissions() {
     profileCompleteness: 'any',
     skillLevel: 'any',
     certificationLevel: 'any',
+    yearsOfExperience: [],
+    educationDegrees: [],
+    educationField: '',
   })
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
@@ -443,6 +461,17 @@ export default function Submissions() {
     }
     if (filters.certificationLevel && filters.certificationLevel !== 'any') {
       params.append('certificationLevel', filters.certificationLevel)
+    }
+    
+    // Education filters
+    if (filters.yearsOfExperience && filters.yearsOfExperience.length > 0) {
+      params.append('yearsOfExperience', filters.yearsOfExperience.join(','))
+    }
+    if (filters.educationDegrees && filters.educationDegrees.length > 0) {
+      params.append('educationDegrees', filters.educationDegrees.join(','))
+    }
+    if (filters.educationField) {
+      params.append('educationField', filters.educationField)
     }
     
     return params.toString()
