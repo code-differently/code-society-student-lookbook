@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../lib/prisma'
+import { getStudents, getStudentCount } from '../../lib/firebase'
 
 export default async function handler(
   req: NextApiRequest,
@@ -38,211 +38,48 @@ export default async function handler(
       offset = '0'
     } = req.query
 
-    const whereConditions: any = {}
-
-    // Text search
-    if (search) {
-      whereConditions.OR = [
-        { fullName: { contains: search as string, mode: 'insensitive' } },
-        { email: { contains: search as string, mode: 'insensitive' } },
-      ]
+    // Build filters object for Firebase
+    const filters = {
+      search,
+      skills,
+      certifications,
+      interests,
+      workExperience,
+      dateFrom,
+      dateTo,
+      sortBy,
+      hasResume,
+      hasLinkedIn,
+      skillCombination,
+      minSkills,
+      maxSkills,
+      hasAnyCertification,
+      hasWorkExperience,
+      profileCompleteness,
+      skillLevel,
+      certificationLevel,
+      yearsOfExperience,
+      educationDegrees,
+      educationField,
+      limit,
+      offset
     }
 
-    // Skills filtering with combination logic
-    if (skills && skills.length > 0) {
-      const skillArray = Array.isArray(skills) ? skills : skills.split(',')
-      
-      if (skillCombination === 'all') {
-        // Must have ALL selected skills
-        whereConditions.technicalSkills = {
-          every: {
-            name: { in: skillArray }
-          }
-        }
-      } else if (skillCombination === 'exact') {
-        // Must have EXACTLY these skills (no more, no less)
-        whereConditions.technicalSkills = {
-          every: {
-            name: { in: skillArray }
-          }
-        }
-        // This is a simplified version - for exact match we'd need more complex logic
-      } else {
-        // Default: ANY of the selected skills
-        whereConditions.technicalSkills = {
-          some: {
-            name: { in: skillArray }
-          }
-        }
-      }
-    }
+    // Get students from Firebase
+    const submissions = await getStudents(filters)
 
-    // Skill count filtering
-    if (minSkills && parseInt(minSkills as string) > 0) {
-      whereConditions.technicalSkills = {
-        ...whereConditions.technicalSkills,
-        _count: {
-          gte: parseInt(minSkills as string)
-        }
-      }
-    }
+    // Apply pagination (since Firebase filtering is done client-side)
+    const startIndex = parseInt(offset as string)
+    const endIndex = startIndex + parseInt(limit as string)
+    const paginatedSubmissions = submissions.slice(startIndex, endIndex)
 
-    if (maxSkills && parseInt(maxSkills as string) > 0) {
-      whereConditions.technicalSkills = {
-        ...whereConditions.technicalSkills,
-        _count: {
-          ...whereConditions.technicalSkills?._count,
-          lte: parseInt(maxSkills as string)
-        }
-      }
-    }
-
-    // Certifications filtering
-    if (certifications && certifications.length > 0) {
-      const certArray = Array.isArray(certifications) ? certifications : certifications.split(',')
-      whereConditions.certifications = {
-        some: {
-          name: { in: certArray }
-        }
-      }
-    }
-
-    // Has any certification filter
-    if (hasAnyCertification === 'true') {
-      whereConditions.certifications = {
-        some: {}
-      }
-    }
-
-    // Career interests filtering
-    if (interests && interests.length > 0) {
-      const interestArray = Array.isArray(interests) ? interests : interests.split(',')
-      whereConditions.careerInterests = {
-        some: {
-          name: { in: interestArray }
-        }
-      }
-    }
-
-    // Work experience filtering
-    if (workExperience && workExperience.length > 0) {
-      const expArray = Array.isArray(workExperience) ? workExperience : workExperience.split(',')
-      whereConditions.workExperience = {
-        some: {
-          name: { in: expArray }
-        }
-      }
-    }
-
-    // Has work experience filter
-    if (hasWorkExperience === 'true') {
-      whereConditions.workExperience = {
-        some: {}
-      }
-    }
-
-    // Date range filtering
-    if (dateFrom) {
-      whereConditions.createdAt = {
-        ...whereConditions.createdAt,
-        gte: new Date(dateFrom as string)
-      }
-    }
-
-    if (dateTo) {
-      whereConditions.createdAt = {
-        ...whereConditions.createdAt,
-        lte: new Date(dateTo as string)
-      }
-    }
-
-    // Has Resume filter
-    if (hasResume === 'true') {
-      whereConditions.resumeUrl = { 
-        not: {
-          in: [null, '']
-        }
-      }
-    }
-
-    // Has LinkedIn filter
-    if (hasLinkedIn === 'true') {
-      whereConditions.linkedinUrl = { 
-        not: {
-          in: [null, '']
-        }
-      }
-    }
-
-    // Profile completeness filter
-    if (profileCompleteness === 'complete') {
-      whereConditions.AND = [
-        { resumeUrl: { not: { in: [null, ''] } } },
-        { linkedinUrl: { not: { in: [null, ''] } } },
-        { githubUrl: { not: { in: [null, ''] } } },
-      ]
-    } else if (profileCompleteness === 'partial') {
-      whereConditions.OR = [
-        { resumeUrl: { in: [null, ''] } },
-        { linkedinUrl: { in: [null, ''] } },
-        { githubUrl: { in: [null, ''] } },
-      ]
-    }
-
-    // Years of experience filter
-    if (yearsOfExperience && yearsOfExperience.length > 0) {
-      const expArray = Array.isArray(yearsOfExperience) ? yearsOfExperience : yearsOfExperience.split(',')
-      whereConditions.yearsOfExperience = { in: expArray }
-    }
-
-    // Education degrees filter
-    if (educationDegrees && educationDegrees.length > 0) {
-      const degreeArray = Array.isArray(educationDegrees) ? educationDegrees : educationDegrees.split(',')
-      whereConditions.educationDegrees = {
-        some: {
-          name: { in: degreeArray }
-        }
-      }
-    }
-
-    // Field of study filter
-    if (educationField) {
-      whereConditions.educationField = { contains: educationField as string, mode: 'insensitive' }
-    }
-
-    // Build orderBy based on sortBy parameter
-    let orderBy: any = { createdAt: 'desc' }
-    if (sortBy === 'oldest') {
-      orderBy = { createdAt: 'asc' }
-    } else if (sortBy === 'name-asc') {
-      orderBy = { fullName: 'asc' }
-    } else if (sortBy === 'name-desc') {
-      orderBy = { fullName: 'desc' }
-    }
-
-    const submissions = await prisma.student.findMany({
-      where: whereConditions,
-      include: {
-        technicalSkills: true,
-        certifications: true,
-        careerInterests: true,
-        workExperience: true,
-        educationDegrees: true,
-      },
-      orderBy,
-      take: parseInt(limit as string),
-      skip: parseInt(offset as string),
-    })
-
-    // Get total count for pagination
-    const totalCount = await prisma.student.count({
-      where: whereConditions,
-    })
+    // Get total count
+    const totalCount = submissions.length
 
     return res.status(200).json({
-      submissions,
+      submissions: paginatedSubmissions,
       totalCount,
-      hasMore: submissions.length === parseInt(limit as string)
+      hasMore: endIndex < totalCount
     })
   } catch (error) {
     console.error('Error fetching submissions:', error)

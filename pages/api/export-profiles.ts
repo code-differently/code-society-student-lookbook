@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../lib/prisma'
+import { getStudents } from '../../lib/firebase'
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,18 +16,11 @@ export default async function handler(
       return res.status(400).json({ message: 'Student IDs array is required' })
     }
 
-    const students = await prisma.student.findMany({
-      where: {
-        id: { in: studentIds }
-      },
-      include: {
-        technicalSkills: true,
-        certifications: true,
-        careerInterests: true,
-        workExperience: true,
-      },
-      orderBy: { fullName: 'asc' }
-    })
+    // Get all students and filter by IDs
+    const allStudents = await getStudents()
+    const students = allStudents
+      .filter(student => studentIds.includes(student.id))
+      .sort((a, b) => a.fullName.localeCompare(b.fullName))
 
     if (students.length === 0) {
       return res.status(404).json({ message: 'No students found' })

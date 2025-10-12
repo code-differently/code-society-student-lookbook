@@ -1,15 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../lib/prisma'
+import { getStudents } from '../../lib/firebase'
 
 interface TagsResponse {
   skills: string[]
   certifications: string[]
   interests: string[]
   workExperience: string[]
-}
-
-interface TagItem {
-  name: string
 }
 
 export default async function handler(
@@ -21,35 +17,40 @@ export default async function handler(
   }
 
   try {
-    // Get all unique tags from each category
-    const [skills, certifications, interests, workExperience] = await Promise.all([
-      prisma.technicalSkill.findMany({
-        select: { name: true },
-        distinct: ['name'],
-        orderBy: { name: 'asc' }
-      }),
-      prisma.certification.findMany({
-        select: { name: true },
-        distinct: ['name'],
-        orderBy: { name: 'asc' }
-      }),
-      prisma.careerInterest.findMany({
-        select: { name: true },
-        distinct: ['name'],
-        orderBy: { name: 'asc' }
-      }),
-      prisma.workExperience.findMany({
-        select: { name: true },
-        distinct: ['name'],
-        orderBy: { name: 'asc' }
+    // Get all students to extract unique tags
+    const students = await getStudents()
+
+    // Extract unique values from each category
+    const skillsSet = new Set<string>()
+    const certificationsSet = new Set<string>()
+    const interestsSet = new Set<string>()
+    const workExperienceSet = new Set<string>()
+
+    students.forEach(student => {
+      // Technical skills
+      student.technicalSkills?.forEach(skill => skillsSet.add(skill))
+      
+      // Certifications
+      student.certifications?.forEach(cert => {
+        if (typeof cert === 'string') {
+          certificationsSet.add(cert)
+        } else if (cert.name) {
+          certificationsSet.add(cert.name)
+        }
       })
-    ])
+      
+      // Career interests
+      student.careerInterests?.forEach(interest => interestsSet.add(interest))
+      
+      // Work experience
+      student.workExperience?.forEach(exp => workExperienceSet.add(exp))
+    })
 
     const response: TagsResponse = {
-      skills: skills.map((s: TagItem) => s.name),
-      certifications: certifications.map((c: TagItem) => c.name),
-      interests: interests.map((i: TagItem) => i.name),
-      workExperience: workExperience.map((w: TagItem) => w.name)
+      skills: Array.from(skillsSet).sort(),
+      certifications: Array.from(certificationsSet).sort(),
+      interests: Array.from(interestsSet).sort(),
+      workExperience: Array.from(workExperienceSet).sort()
     }
 
     return res.status(200).json(response)

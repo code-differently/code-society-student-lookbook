@@ -216,12 +216,12 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               <Stack divider={<StackDivider />} spacing={4}>
                 <Box>
                   <Text fontWeight="600" mb={2} color="gray.700">Education</Text>
-                  {submission.educationDegrees && submission.educationDegrees.length > 0 ? (
+                  {submission.educationDegree && submission.educationDegree.length > 0 ? (
                     <Wrap spacing={2} mb={2}>
-                      {submission.educationDegrees.map((degree) => (
-                        <WrapItem key={degree.id}>
+                      {submission.educationDegree.map((degree, index) => (
+                        <WrapItem key={index}>
                           <Badge colorScheme="teal" variant="solid" px={2} py={1} borderRadius="md">
-                            {degree.name}
+                            {degree}
                           </Badge>
                         </WrapItem>
                       ))}
@@ -246,10 +246,10 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Technical Skills</Text>
                   <Wrap spacing={2}>
-                  {submission.technicalSkills.map((skill) => (
-                    <WrapItem key={typeof skill === 'string' ? skill : skill.id}>
+                  {submission.technicalSkills.map((skill, index) => (
+                    <WrapItem key={index}>
                         <Badge colorScheme="blue" variant="solid" px={2} py={1} borderRadius="md">
-                          {typeof skill === 'string' ? skill : skill.name}
+                          {skill}
                         </Badge>
                     </WrapItem>
                   ))}
@@ -277,10 +277,10 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Career Interests</Text>
                   <Wrap spacing={2}>
-                  {submission.careerInterests.map((interest) => (
-                    <WrapItem key={typeof interest === 'string' ? interest : interest.id}>
+                  {submission.careerInterests.map((interest, index) => (
+                    <WrapItem key={index}>
                         <Badge colorScheme="purple" variant="solid" px={2} py={1} borderRadius="md">
-                          {typeof interest === 'string' ? interest : interest.name}
+                          {interest}
                         </Badge>
                     </WrapItem>
                   ))}
@@ -290,10 +290,10 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Work Experience</Text>
                   <Wrap spacing={2}>
-                  {submission.workExperience.map((exp) => (
-                    <WrapItem key={typeof exp === 'string' ? exp : exp.id}>
+                  {submission.workExperience.map((exp, index) => (
+                    <WrapItem key={index}>
                         <Badge colorScheme="orange" variant="solid" px={2} py={1} borderRadius="md">
-                          {typeof exp === 'string' ? exp : exp.name}
+                          {exp}
                         </Badge>
                     </WrapItem>
                   ))}
@@ -330,7 +330,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   {submission.resumeUrl && (
                       <Button
                         as="a"
-                        href={submission.resumeUrl}
+                        href={`/api/serve-file?fileUrl=${encodeURIComponent(submission.resumeUrl)}`}
                         target="_blank"
                         size="sm"
                         colorScheme="green"
@@ -414,8 +414,6 @@ export default function Submissions() {
     dateFrom: '',
     dateTo: '',
     sortBy: 'newest',
-    hasResume: false,
-    hasLinkedIn: false,
     skillCombination: 'any',
     minSkills: 0,
     maxSkills: 0,
@@ -442,8 +440,6 @@ export default function Submissions() {
     if (filters.dateFrom) params.append('dateFrom', filters.dateFrom)
     if (filters.dateTo) params.append('dateTo', filters.dateTo)
     if (filters.sortBy) params.append('sortBy', filters.sortBy)
-    if (filters.hasResume) params.append('hasResume', 'true')
-    if (filters.hasLinkedIn) params.append('hasLinkedIn', 'true')
     
     // New advanced filters
     if (filters.skillCombination && filters.skillCombination !== 'any') {
@@ -707,8 +703,6 @@ export default function Submissions() {
                     dateFrom: '',
                     dateTo: '',
                     sortBy: 'newest',
-                    hasResume: false,
-                    hasLinkedIn: false,
                     skillCombination: 'any',
                     minSkills: 0,
                     maxSkills: 0,

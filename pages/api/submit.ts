@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../lib/prisma'
+import { createStudent, uploadFile } from '../../lib/firebase'
 import * as formidable from 'formidable'
 import type { File, Fields, Files, Part } from 'formidable'
 import * as fs from 'fs'
@@ -137,37 +137,67 @@ export default async function handler(
     console.log('Headshot URL:', headshotUrl)
 
     try {
-      const student = await prisma.student.create({
-        data: {
-          fullName: getFirstField(fields.fullName) ?? '',
-          email: getFirstField(fields.email) ?? '',
-          linkedinUrl: getFirstField(fields.linkedinUrl) ?? '',
-          githubUrl: getFirstField(fields.githubUrl) ?? '',
-          resumeUrl,
-          headshotUrl,
-          yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
-          educationField: getFirstField(fields.educationField) ?? null,
-          educationDegrees: {
-            create: JSON.parse(getFirstField(fields.educationDegree) ?? '[]').map((degree: string) => ({ name: degree })),
-          },
-          technicalSkills: {
-            create: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]').map((skill: string) => ({ name: skill })),
-          },
-          certifications: {
-            create: JSON.parse(getFirstField(fields.certifications) ?? '[]').map((cert: any) =>
-              typeof cert === 'string'
-                ? { name: cert, status: null }
-                : { name: cert.name, status: cert.status ?? null }
-            ),
-          },
-          careerInterests: {
-            create: JSON.parse(getFirstField(fields.careerInterests) ?? '[]').map((interest: string) => ({ name: interest })),
-          },
-          workExperience: {
-            create: JSON.parse(getFirstField(fields.workExperience) ?? '[]').map((exp: string) => ({ name: exp })),
-          },
-        },
-      })
+      let firebaseResumeUrl = resumeUrl
+      let firebaseHeadshotUrl = headshotUrl || ''
+      
+      if (resumeFile) {
+        try {
+          firebaseResumeUrl = await uploadFile(resumeFile, 'resumes')
+        } catch (uploadError) {
+          console.error('Error uploading resume to Firebase:', uploadError)
+          // Fall back to local URL if Firebase upload fails
+          firebaseResumeUrl = resumeUrl
+        }
+      }
+      
+      if (headshotFile) {
+        try {
+          firebaseHeadshotUrl = await uploadFile(headshotFile, 'headshots')
+        } catch (uploadError) {
+          console.error('Error uploading headshot to Firebase:', uploadError)
+          // Fall back to local URL if Firebase upload fails
+          firebaseHeadshotUrl = headshotUrl || ''
+        }
+      }
+
+      const studentData = {
+        fullName: getFirstField(fields.fullName) ?? '',
+        email: getFirstField(fields.email) ?? '',
+        linkedinUrl: getFirstField(fields.linkedinUrl) ?? '',
+        githubUrl: getFirstField(fields.githubUrl) ?? '',
+        resumeUrl: firebaseResumeUrl || resumeUrl,
+        headshotUrl: firebaseHeadshotUrl || headshotUrl || null,
+        yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
+        educationField: getFirstField(fields.educationField) ?? null,
+        educationDegree: JSON.parse(getFirstField(fields.educationDegree) ?? '[]'),
+        technicalSkills: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]'),
+        certifications: JSON.parse(getFirstField(fields.certifications) ?? '[]').map((cert: any) =>
+          typeof cert === 'string'
+            ? { name: cert, status: null }
+            : { name: cert.name, status: cert.status ?? null }
+        ),
+        careerInterests: JSON.parse(getFirstField(fields.careerInterests) ?? '[]'),
+        workExperience: JSON.parse(getFirstField(fields.workExperience) ?? '[]'),
+        createdAt: new Date(),
+      }
+
+      const result = await createStudent(studentData)
+      
+      if (!result.success) {
+        if (result.error?.includes('email')) {
+          return res.status(400).json({
+            success: false,
+            message: result.error,
+            errorType: 'duplicate_email'
+          })
+        }
+        
+        return res.status(500).json({
+          success: false,
+          message: result.error || 'Error submitting form',
+          errorType: 'database_error'
+        })
+      }
 
       return res.status(200).json({
         success: true,
@@ -176,25 +206,6 @@ export default async function handler(
       })
     } catch (error: any) {
       console.error('Error submitting form:', error)
-      
-      // Check for duplicate email error
-      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-        return res.status(400).json({
-          success: false,
-          message: 'A student with this email address has already submitted the form',
-          errorType: 'duplicate_email'
-        })
-      }
-
-      // Check for validation errors
-      if (error.code === 'P2000') {
-        return res.status(400).json({
-          success: false,
-          message: 'Data validation error - please check your input',
-          errorType: 'validation_error',
-          details: error.message
-        })
-      }
 
       // Check for JSON parsing errors
       if (error instanceof SyntaxError) {

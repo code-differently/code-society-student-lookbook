@@ -224,7 +224,7 @@ export default function Home() {
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl isRequired>
             <FormLabel>LinkedIn URL</FormLabel>
             <Input
               type="url"
@@ -234,7 +234,7 @@ export default function Home() {
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl isRequired>
             <FormLabel>GitHub URL</FormLabel>
             <Input
               type="url"
