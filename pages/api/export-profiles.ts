@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { getStudents } from '../../lib/firebase'
+import clientPromise from '../../lib/mongodb'
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,11 +16,13 @@ export default async function handler(
       return res.status(400).json({ message: 'Student IDs array is required' })
     }
 
-    // Get all students and filter by IDs
-    const allStudents = await getStudents()
-    const students = allStudents
-      .filter(student => studentIds.includes(student.id))
-      .sort((a, b) => a.fullName.localeCompare(b.fullName))
+    // Get students from MongoDB by IDs
+    const client = await clientPromise
+    const db = client.db()
+    const students = await db.collection('students')
+      .find({ id: { $in: studentIds } })
+      .sort({ fullName: 1 })
+      .toArray()
 
     if (students.length === 0) {
       return res.status(404).json({ message: 'No students found' })
@@ -237,4 +239,4 @@ function generateProfilesHTML(students: any[]) {
 </body>
 </html>
   `
-} 
+}

@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { getStudents } from '../../lib/firebase'
+import clientPromise from '../../lib/mongodb'
 import fs from 'fs'
 import path from 'path'
 import archiver from 'archiver'
@@ -19,17 +19,13 @@ export default async function handler(
       return res.status(400).json({ message: 'Student IDs array is required' })
     }
 
-    // Get all students and filter by IDs
-    const allStudents = await getStudents()
-    const students = allStudents
-      .filter(student => studentIds.includes(student.id))
-      .map(student => ({
-        id: student.id,
-        fullName: student.fullName,
-        resumeUrl: student.resumeUrl,
-        email: student.email
-      }))
-      .sort((a, b) => a.fullName.localeCompare(b.fullName))
+    // Get students from MongoDB by IDs
+    const client = await clientPromise
+    const db = client.db()
+    const students = await db.collection('students')
+      .find({ id: { $in: studentIds } })
+      .sort({ fullName: 1 })
+      .toArray()
 
     // Filter out students without resumes
     const studentsWithResumes = students.filter(student => student.resumeUrl && student.resumeUrl.trim() !== '')
@@ -67,31 +63,15 @@ export default async function handler(
         try {
           const fileName = `${student.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_resume.pdf`
           
-          // Check if it's a Firebase URL (starts with https://)
-          if (student.resumeUrl.startsWith('https://')) {
-            // Download file from Firebase Storage
-            console.log(`Downloading Firebase file for ${student.fullName}: ${student.resumeUrl}`)
-            
-            const response = await fetch(student.resumeUrl)
-            if (response.ok && response.body) {
-              const buffer = await response.arrayBuffer()
-              archive.append(Buffer.from(buffer), { name: fileName })
-              return { success: true, fileName }
-            } else {
-              console.log(`Failed to download Firebase file for ${student.fullName}`)
-              return { success: false, fileName }
-            }
+          // Handle local file paths
+          const resumePath = path.join(process.cwd(), 'public', student.resumeUrl)
+          
+          if (fs.existsSync(resumePath)) {
+            archive.file(resumePath, { name: fileName })
+            return { success: true, fileName }
           } else {
-            // Handle local file paths
-            const resumePath = path.join(process.cwd(), 'public', student.resumeUrl)
-            
-            if (fs.existsSync(resumePath)) {
-              archive.file(resumePath, { name: fileName })
-              return { success: true, fileName }
-            } else {
-              console.log(`Resume file not found for ${student.fullName}: ${resumePath}`)
-              return { success: false, fileName }
-            }
+            console.log(`Resume file not found for ${student.fullName}: ${resumePath}`)
+            return { success: false, fileName }
           }
         } catch (error) {
           console.error(`Error processing resume for ${student.fullName}:`, error)
@@ -138,4 +118,4 @@ export default async function handler(
     console.error('Error exporting resumes:', error)
     return res.status(500).json({ message: 'Error exporting resumes' })
   }
-} 
+}

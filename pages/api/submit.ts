@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createStudent, uploadFile } from '../../lib/firebase'
+import clientPromise from '../../lib/mongodb'
 import * as formidable from 'formidable'
 import type { File, Fields, Files, Part } from 'formidable'
 import * as fs from 'fs'
@@ -137,36 +137,14 @@ export default async function handler(
     console.log('Headshot URL:', headshotUrl)
 
     try {
-      let firebaseResumeUrl = resumeUrl
-      let firebaseHeadshotUrl = headshotUrl || ''
-      
-      if (resumeFile) {
-        try {
-          firebaseResumeUrl = await uploadFile(resumeFile, 'resumes')
-        } catch (uploadError) {
-          console.error('Error uploading resume to Firebase:', uploadError)
-          // Fall back to local URL if Firebase upload fails
-          firebaseResumeUrl = resumeUrl
-        }
-      }
-      
-      if (headshotFile) {
-        try {
-          firebaseHeadshotUrl = await uploadFile(headshotFile, 'headshots')
-        } catch (uploadError) {
-          console.error('Error uploading headshot to Firebase:', uploadError)
-          // Fall back to local URL if Firebase upload fails
-          firebaseHeadshotUrl = headshotUrl || ''
-        }
-      }
-
+      // MongoDB logic for student creation
       const studentData = {
         fullName: getFirstField(fields.fullName) ?? '',
         email: getFirstField(fields.email) ?? '',
         linkedinUrl: getFirstField(fields.linkedinUrl) ?? '',
         githubUrl: getFirstField(fields.githubUrl) ?? '',
-        resumeUrl: firebaseResumeUrl || resumeUrl,
-        headshotUrl: firebaseHeadshotUrl || headshotUrl || null,
+        resumeUrl: resumeUrl,
+        headshotUrl: headshotUrl || null,
         yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
         educationField: getFirstField(fields.educationField) ?? null,
         educationDegree: JSON.parse(getFirstField(fields.educationDegree) ?? '[]'),
@@ -181,23 +159,19 @@ export default async function handler(
         createdAt: new Date(),
       }
 
-      const result = await createStudent(studentData)
-      
-      if (!result.success) {
-        if (result.error?.includes('email')) {
-          return res.status(400).json({
-            success: false,
-            message: result.error,
-            errorType: 'duplicate_email'
-          })
-        }
-        
-        return res.status(500).json({
+      // Duplicate email check
+      const client = await clientPromise
+      const db = client.db()
+      const existing = await db.collection('students').findOne({ email: studentData.email })
+      if (existing) {
+        return res.status(400).json({
           success: false,
-          message: result.error || 'Error submitting form',
-          errorType: 'database_error'
+          message: 'A student with this email address has already submitted the form',
+          errorType: 'duplicate_email'
         })
       }
+
+      await db.collection('students').insertOne(studentData)
 
       return res.status(200).json({
         success: true,
@@ -225,4 +199,4 @@ export default async function handler(
       })
     }
   })
-} 
+}

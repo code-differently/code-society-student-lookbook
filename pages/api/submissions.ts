@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { getStudents, getStudentCount } from '../../lib/firebase'
+import clientPromise from '../../lib/mongodb'
 
 export default async function handler(
   req: NextApiRequest,
@@ -38,51 +38,77 @@ export default async function handler(
       offset = '0'
     } = req.query
 
-    // Build filters object for Firebase
-    const filters = {
-      search,
-      skills,
-      certifications,
-      interests,
-      workExperience,
-      dateFrom,
-      dateTo,
-      sortBy,
-      hasResume,
-      hasLinkedIn,
-      skillCombination,
-      minSkills,
-      maxSkills,
-      hasAnyCertification,
-      hasWorkExperience,
-      profileCompleteness,
-      skillLevel,
-      certificationLevel,
-      yearsOfExperience,
-      educationDegrees,
-      educationField,
-      limit,
-      offset
+    // Build MongoDB query
+    const query: any = {}
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ]
     }
+    if (skills) {
+      const skillArray = Array.isArray(skills) ? skills : String(skills).split(',')
+      query.technicalSkills = { $in: skillArray }
+    }
+    if (certifications) {
+      const certArray = Array.isArray(certifications) ? certifications : String(certifications).split(',')
+      query['certifications.name'] = { $in: certArray }
+    }
+    if (interests) {
+      const interestArray = Array.isArray(interests) ? interests : String(interests).split(',')
+      query.careerInterests = { $in: interestArray }
+    }
+    if (workExperience) {
+      const expArray = Array.isArray(workExperience) ? workExperience : String(workExperience).split(',')
+      query.workExperience = { $in: expArray }
+    }
+    if (hasResume === 'true') {
+      query.resumeUrl = { $ne: '' }
+    }
+    if (hasLinkedIn === 'true') {
+      query.linkedinUrl = { $ne: '' }
+    }
+    if (yearsOfExperience) {
+      const expArray = Array.isArray(yearsOfExperience) ? yearsOfExperience : String(yearsOfExperience).split(',')
+      query.yearsOfExperience = { $in: expArray }
+    }
+    if (educationDegrees) {
+      const degreeArray = Array.isArray(educationDegrees) ? educationDegrees : String(educationDegrees).split(',')
+      query.educationDegree = { $in: degreeArray }
+    }
+    if (educationField) {
+      query.educationField = { $regex: educationField, $options: 'i' }
+    }
+    // Add more filters as needed
 
-    // Get students from Firebase
-    const submissions = await getStudents(filters)
+    // Sorting
+    let sort: any = { createdAt: -1 }
+    if (sortBy === 'oldest') sort = { createdAt: 1 }
+    if (sortBy === 'name-asc') sort = { fullName: 1 }
+    if (sortBy === 'name-desc') sort = { fullName: -1 }
 
-    // Apply pagination (since Firebase filtering is done client-side)
-    const startIndex = parseInt(offset as string)
-    const endIndex = startIndex + parseInt(limit as string)
-    const paginatedSubmissions = submissions.slice(startIndex, endIndex)
+    const client = await clientPromise
+    const db = client.db()
+    const studentsCol = db.collection('students')
 
-    // Get total count
-    const totalCount = submissions.length
+    const skip = parseInt(offset as string)
+    const lim = parseInt(limit as string)
+
+    const totalCount = await studentsCol.countDocuments(query)
+    const submissions = await studentsCol
+      .find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(lim)
+      .toArray()
 
     return res.status(200).json({
-      submissions: paginatedSubmissions,
+      submissions,
       totalCount,
-      hasMore: endIndex < totalCount
+      hasMore: skip + lim < totalCount
     })
   } catch (error) {
     console.error('Error fetching submissions:', error)
     return res.status(500).json({ message: 'Error fetching submissions' })
   }
-} 
+}

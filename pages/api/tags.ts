@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { getStudents } from '../../lib/firebase'
+import clientPromise from '../../lib/mongodb'
 
 interface TagsResponse {
   skills: string[]
@@ -17,8 +17,10 @@ export default async function handler(
   }
 
   try {
-    // Get all students to extract unique tags
-    const students = await getStudents()
+    // Get all students from MongoDB
+    const client = await clientPromise
+    const db = client.db()
+    const students = await db.collection('students').find({}).toArray()
 
     // Extract unique values from each category
     const skillsSet = new Set<string>()
@@ -28,10 +30,10 @@ export default async function handler(
 
     students.forEach(student => {
       // Technical skills
-      student.technicalSkills?.forEach(skill => skillsSet.add(skill))
+      student.technicalSkills?.forEach((skill: string) => skillsSet.add(skill))
       
       // Certifications
-      student.certifications?.forEach(cert => {
+      student.certifications?.forEach((cert: any) => {
         if (typeof cert === 'string') {
           certificationsSet.add(cert)
         } else if (cert.name) {
@@ -40,10 +42,10 @@ export default async function handler(
       })
       
       // Career interests
-      student.careerInterests?.forEach(interest => interestsSet.add(interest))
+      student.careerInterests?.forEach((interest: string) => interestsSet.add(interest))
       
       // Work experience
-      student.workExperience?.forEach(exp => workExperienceSet.add(exp))
+      student.workExperience?.forEach((exp: string) => workExperienceSet.add(exp))
     })
 
     const response: TagsResponse = {
@@ -58,4 +60,4 @@ export default async function handler(
     console.error('Error fetching tags:', error)
     return res.status(500).json({ message: 'Error fetching tags' })
   }
-} 
+}
