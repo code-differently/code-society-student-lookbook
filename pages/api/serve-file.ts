@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import fs from 'fs'
-import path from 'path'
+import clientPromise from '../../lib/mongodb'
+import { ObjectId } from 'mongodb'
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,43 +11,59 @@ export default async function handler(
   }
 
   try {
-    const { fileUrl } = req.query
+    const { studentId, type } = req.query
 
-    if (!fileUrl || typeof fileUrl !== 'string') {
-      return res.status(400).json({ message: 'File URL is required' })
+    if (!studentId || typeof studentId !== 'string' || !type || typeof type !== 'string') {
+      return res.status(400).json({ message: 'studentId and type are required' })
+    }
+    if (type !== 'resume' && type !== 'headshot') {
+      return res.status(400).json({ message: 'Invalid type. Must be resume or headshot.' })
     }
 
-    // Only handle local file paths (Firebase URLs no longer supported)
-    const filePath = path.join(process.cwd(), 'public', fileUrl)
-    // Security check - make sure the file is within the uploads directory
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!filePath.startsWith(uploadsDir)) {
-      return res.status(403).json({ message: 'Access denied' })
+    const client = await clientPromise
+    const db = client.db()
+    // Try both id and _id
+    let student = await db.collection('students').findOne({ id: studentId })
+    if (!student) {
+      // Try _id as ObjectId
+      try {
+        student = await db.collection('students').findOne({ _id: new ObjectId(studentId) })
+      } catch {}
     }
-    if (fs.existsSync(filePath)) {
-      const stat = fs.statSync(filePath)
-      const fileStream = fs.createReadStream(filePath)
-      // Determine content type based on file extension
-      const ext = path.extname(filePath).toLowerCase()
-      let contentType = 'application/octet-stream'
-      if (ext === '.pdf') {
-        contentType = 'application/pdf'
-      } else if (ext === '.jpg' || ext === '.jpeg') {
-        contentType = 'image/jpeg'
-      } else if (ext === '.png') {
-        contentType = 'image/png'
-      } else if (ext === '.gif') {
-        contentType = 'image/gif'
-      }
-      // Set appropriate headers
-      res.setHeader('Content-Type', contentType)
-      res.setHeader('Content-Length', stat.size)
-      res.setHeader('Content-Disposition', `inline; filename="${path.basename(filePath)}"`)
-      // Pipe the file to the response
-      fileStream.pipe(res)
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' })
+    }
+
+    let fileData, mimeType, fileName
+    if (type === 'resume') {
+      fileData = student.resumeData
+      mimeType = student.resumeMimeType || 'application/pdf'
+      fileName = `${student.fullName?.replace(/[^a-zA-Z0-9]/g, '_') || 'resume'}.pdf`
     } else {
+      fileData = student.headshotData
+      mimeType = student.headshotMimeType || 'image/jpeg'
+      fileName = `${student.fullName?.replace(/[^a-zA-Z0-9]/g, '_') || 'headshot'}.jpg`
+    }
+
+    // Debug logging for headshot and resume serving
+    if (!fileData) {
       return res.status(404).json({ message: 'File not found' })
     }
+
+    let buffer: Buffer
+    if (typeof fileData === 'string') {
+      buffer = Buffer.from(fileData, 'base64')
+    } else if (fileData.buffer) {
+      buffer = fileData.buffer // MongoDB Binary
+    } else if (Buffer.isBuffer(fileData)) {
+      buffer = fileData
+    } else {
+      return res.status(500).json({ message: 'Invalid file data format' })
+    }
+
+    res.setHeader('Content-Type', mimeType)
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`)
+    res.send(buffer)
   } catch (error) {
     console.error('Error serving file:', error)
     return res.status(500).json({ message: 'Error serving file' })

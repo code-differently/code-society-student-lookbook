@@ -95,12 +95,19 @@ export default async function handler(
     const lim = parseInt(limit as string)
 
     const totalCount = await studentsCol.countDocuments(query)
-    const submissions = await studentsCol
+    const submissionsRaw = await studentsCol
       .find(query)
       .sort(sort)
       .skip(skip)
       .limit(lim)
       .toArray()
+
+    // Map _id to id for frontend compatibility and add headshotUrl if headshotData exists
+    const submissions = submissionsRaw.map((doc) => ({
+      ...doc,
+      id: doc._id.toString(),
+      headshotUrl: doc.headshotData ? `/api/serve-file?studentId=${doc._id.toString()}&type=headshot` : undefined,
+    }))
 
     return res.status(200).json({
       submissions,

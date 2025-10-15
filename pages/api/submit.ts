@@ -3,35 +3,11 @@ import clientPromise from '../../lib/mongodb'
 import * as formidable from 'formidable'
 import type { File, Fields, Files, Part } from 'formidable'
 import * as fs from 'fs'
-import * as path from 'path'
 
 export const config = {
   api: {
     bodyParser: false,
   },
-}
-
-type ResponseData = {
-  success: boolean
-  message: string
-  redirectUrl?: string
-  errorType?: string
-  receivedType?: string
-  details?: string
-  errorField?: string
-}
-
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-const headshotsDir = path.join(uploadsDir, 'headshots')
-const resumesDir = path.join(uploadsDir, 'resumes')
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir)
-}
-if (!fs.existsSync(headshotsDir)) {
-  fs.mkdirSync(headshotsDir, { recursive: true })
-}
-if (!fs.existsSync(resumesDir)) {
-  fs.mkdirSync(resumesDir, { recursive: true })
 }
 
 // Helper to get the first value from a field (handles string | string[] | undefined)
@@ -42,16 +18,15 @@ function getFirstField<T>(field: T | T[] | undefined): T | undefined {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ResponseData>
+  res: NextApiResponse<any>
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' })
   }
 
   const form = new formidable.IncomingForm({
-    uploadDir: uploadsDir,
-    keepExtensions: true,
     maxFileSize: 10 * 1024 * 1024, // 10MB
+    keepExtensions: true,
     filter: (part: Part) => {
       // Allow PDFs for resumes and images for headshots
       if (part.name === 'resume') {
@@ -62,15 +37,6 @@ export default async function handler(
       }
       return false
     },
-  })
-
-  // Custom file naming to put files in correct subdirectories
-  form.on('fileBegin', (name, file) => {
-    if (name === 'headshot') {
-      file.filepath = path.join(headshotsDir, file.newFilename || file.originalFilename || 'headshot')
-    } else if (name === 'resume') {
-      file.filepath = path.join(resumesDir, file.newFilename || file.originalFilename || 'resume')
-    }
   })
 
   form.parse(req, async (err: any, fields: Fields, files: Files) => {
@@ -95,46 +61,29 @@ export default async function handler(
       })
     }
 
-    console.log('Files received:', Object.keys(files))
-    console.log('Fields received:', Object.keys(fields))
-
-    // Handle resume file with detailed logging
+    // Handle resume file
     const resumeFileRaw = files.resume
-    console.log('Resume file raw:', resumeFileRaw)
-    
-    if (resumeFileRaw && !Array.isArray(resumeFileRaw) && (resumeFileRaw as File).mimetype !== 'application/pdf') {
-      console.error('Resume file type error:', (resumeFileRaw as File).mimetype)
-      return res.status(400).json({
-        success: false,
-        message: 'Resume must be a PDF file. Please upload a PDF document.',
-        errorType: 'resume_file_type',
-        errorField: 'resume',
-        receivedType: (resumeFileRaw as File).mimetype || undefined
-      })
-    }
-    
     const resumeFile = Array.isArray(resumeFileRaw) ? resumeFileRaw[0] : resumeFileRaw
-    const resumeUrl = resumeFile ? `/uploads/resumes/${path.basename(resumeFile.filepath)}` : ''
-    console.log('Resume URL:', resumeUrl)
-
-    // Handle headshot file with detailed logging
-    const headshotFileRaw = files.headshot
-    console.log('Headshot file raw:', headshotFileRaw)
-    
-    if (headshotFileRaw && !Array.isArray(headshotFileRaw) && !(headshotFileRaw as File).mimetype?.startsWith('image/')) {
-      console.error('Headshot file type error:', (headshotFileRaw as File).mimetype)
-      return res.status(400).json({
-        success: false,
-        message: 'Headshot must be an image file (JPG, PNG, etc.). Please upload a photo.',
-        errorType: 'headshot_file_type',
-        errorField: 'headshot',
-        receivedType: (headshotFileRaw as File).mimetype || undefined
-      })
+    let resumeData = null
+    let resumeMimeType = null
+    if (resumeFile) {
+      resumeData = await fs.promises.readFile(resumeFile.filepath)
+      resumeMimeType = resumeFile.mimetype
+      // Remove temp file
+      await fs.promises.unlink(resumeFile.filepath)
     }
-    
+
+    // Handle headshot file
+    const headshotFileRaw = files.headshot
     const headshotFile = Array.isArray(headshotFileRaw) ? headshotFileRaw[0] : headshotFileRaw
-    const headshotUrl = headshotFile ? `/uploads/headshots/${path.basename(headshotFile.filepath)}?t=${Date.now()}` : null
-    console.log('Headshot URL:', headshotUrl)
+    let headshotData = null
+    let headshotMimeType = null
+    if (headshotFile) {
+      headshotData = await fs.promises.readFile(headshotFile.filepath)
+      headshotMimeType = headshotFile.mimetype
+      // Remove temp file
+      await fs.promises.unlink(headshotFile.filepath)
+    }
 
     try {
       // MongoDB logic for student creation
@@ -143,8 +92,10 @@ export default async function handler(
         email: getFirstField(fields.email) ?? '',
         linkedinUrl: getFirstField(fields.linkedinUrl) ?? '',
         githubUrl: getFirstField(fields.githubUrl) ?? '',
-        resumeUrl: resumeUrl,
-        headshotUrl: headshotUrl || null,
+        resumeData,
+        resumeMimeType,
+        headshotData,
+        headshotMimeType,
         yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
         educationField: getFirstField(fields.educationField) ?? null,
         educationDegree: JSON.parse(getFirstField(fields.educationDegree) ?? '[]'),

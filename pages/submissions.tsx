@@ -39,6 +39,10 @@ import {
   ModalBody,
   ModalCloseButton,
   Image,
+  Input,
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
 } from '@chakra-ui/react'
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon, DownloadIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import FilterPanel, { FilterState } from '../components/FilterPanel'
@@ -59,21 +63,18 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
 
   const handleDownloadHeadshot = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (submission.headshotUrl) {
-      const link = document.createElement('a')
-      link.href = submission.headshotUrl
-      link.download = `${submission.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_headshot.jpg`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    }
+    const url = `/api/serve-file?studentId=${submission.id}&type=headshot`
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${submission.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_headshot.jpg`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const handleHeadshotClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (submission.headshotUrl) {
-      onModalOpen()
-    }
+    onModalOpen()
   }
 
   return (
@@ -142,7 +143,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                       transition="all 0.2s"
                     >
                       <NextImage
-                        src={submission.headshotUrl}
+                        src={`/api/serve-file?studentId=${submission.id}&type=headshot`}
                         alt={submission.fullName + ' headshot'}
                         width={80}
                         height={80}
@@ -330,7 +331,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   {submission.resumeUrl && (
                       <Button
                         as="a"
-                        href={`/api/serve-file?fileUrl=${encodeURIComponent(submission.resumeUrl)}`}
+                        href={`/api/serve-file?studentId=${submission.id}&type=resume`}
                         target="_blank"
                         size="sm"
                         colorScheme="green"
@@ -369,7 +370,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                 p={4}
               >
                 <Image
-                  src={submission.headshotUrl!}
+                  src={`/api/serve-file?studentId=${submission.id}&type=headshot`}
                   alt={`${submission.fullName} headshot`}
                   maxH="400px"
                   mx="auto"
@@ -428,6 +429,10 @@ export default function Submissions() {
   })
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [showPasswordModal, setShowPasswordModal] = useState(true)
 
   const buildQueryString = useCallback((filters: FilterState) => {
     const params = new URLSearchParams()
@@ -530,7 +535,7 @@ export default function Submissions() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'student-profiles.html'
+      a.download = 'CodeDifferentlyResumesBulk.pdf'
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -551,7 +556,7 @@ export default function Submissions() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentIds: selectedIds }),
       })
-      if (!res.ok) throw new Error('Failed to export resumes')
+      if (!res.ok) throw new Error('Failed to export resumes\n');
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -566,6 +571,60 @@ export default function Submissions() {
     } finally {
       setExporting(false)
     }
+  }
+
+  useEffect(() => {
+    // Check localStorage for auth
+    if (typeof window !== 'undefined') {
+      const authed = localStorage.getItem('submissionsAuthed')
+      if (authed === 'true') {
+        setIsAuthenticated(true)
+        setShowPasswordModal(false)
+      }
+    }
+  }, [])
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    const res = await fetch('/api/check-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    if (res.ok) {
+      setIsAuthenticated(true)
+      setShowPasswordModal(false)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('submissionsAuthed', 'true')
+      }
+    } else {
+      setPasswordError('Incorrect password')
+    }
+  }
+
+  if (showPasswordModal && !isAuthenticated) {
+    return (
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bgColor}>
+        <Container maxW="sm" p={8} bg="white" borderRadius="xl" boxShadow="xl">
+          <Heading size="lg" mb={6} textAlign="center">Protected</Heading>
+          <form onSubmit={handlePasswordSubmit}>
+            <FormControl isInvalid={!!passwordError}>
+              <FormLabel>Password</FormLabel>
+              <Input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter password"
+                autoFocus
+              />
+              {passwordError && <FormErrorMessage>{passwordError}</FormErrorMessage>}
+            </FormControl>
+            <Button mt={6} colorScheme="blue" type="submit" w="100%">Enter</Button>
+          </form>
+        </Container>
+      </Box>
+    )
   }
 
   if (error) {
@@ -657,7 +716,7 @@ export default function Submissions() {
                 isLoading={exporting}
                 isDisabled={selectedIds.length === 0}
               >
-                Export Profiles
+                Bulk Download Resumes
               </Button>
               <Button
                 colorScheme="green"
@@ -722,12 +781,12 @@ export default function Submissions() {
             {!loading && submissions.length > 0 && (
         <VStack spacing={4} align="stretch">
           {submissions.map((submission) => (
-                  <SubmissionCard
-                    key={submission.id}
-                    submission={submission}
-                    isSelected={selectedIds.includes(submission.id)}
-                    onSelect={handleSelect}
-                  />
+            <SubmissionCard
+              key={submission.id}
+              submission={submission}
+              isSelected={selectedIds.includes(submission.id)}
+              onSelect={handleSelect}
+            />
           ))}
         </VStack>
             )}
@@ -736,4 +795,4 @@ export default function Submissions() {
     </Container>
     </Box>
   )
-} 
+}
