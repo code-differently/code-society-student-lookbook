@@ -39,6 +39,10 @@ import {
   ModalBody,
   ModalCloseButton,
   Image,
+  Input,
+  FormControl,
+  FormLabel,
+  FormErrorMessage,
 } from '@chakra-ui/react'
 import { ChevronDownIcon, ChevronUpIcon, SearchIcon, DownloadIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import FilterPanel, { FilterState } from '../components/FilterPanel'
@@ -425,6 +429,10 @@ export default function Submissions() {
   })
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [showPasswordModal, setShowPasswordModal] = useState(true)
 
   const buildQueryString = useCallback((filters: FilterState) => {
     const params = new URLSearchParams()
@@ -563,6 +571,60 @@ export default function Submissions() {
     } finally {
       setExporting(false)
     }
+  }
+
+  useEffect(() => {
+    // Check localStorage for auth
+    if (typeof window !== 'undefined') {
+      const authed = localStorage.getItem('submissionsAuthed')
+      if (authed === 'true') {
+        setIsAuthenticated(true)
+        setShowPasswordModal(false)
+      }
+    }
+  }, [])
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    const res = await fetch('/api/check-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    if (res.ok) {
+      setIsAuthenticated(true)
+      setShowPasswordModal(false)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('submissionsAuthed', 'true')
+      }
+    } else {
+      setPasswordError('Incorrect password')
+    }
+  }
+
+  if (showPasswordModal && !isAuthenticated) {
+    return (
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" bg={bgColor}>
+        <Container maxW="sm" p={8} bg="white" borderRadius="xl" boxShadow="xl">
+          <Heading size="lg" mb={6} textAlign="center">Protected</Heading>
+          <form onSubmit={handlePasswordSubmit}>
+            <FormControl isInvalid={!!passwordError}>
+              <FormLabel>Password</FormLabel>
+              <Input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter password"
+                autoFocus
+              />
+              {passwordError && <FormErrorMessage>{passwordError}</FormErrorMessage>}
+            </FormControl>
+            <Button mt={6} colorScheme="blue" type="submit" w="100%">Enter</Button>
+          </form>
+        </Container>
+      </Box>
+    )
   }
 
   if (error) {
