@@ -59,21 +59,18 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
 
   const handleDownloadHeadshot = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (submission.headshotUrl) {
-      const link = document.createElement('a')
-      link.href = submission.headshotUrl
-      link.download = `${submission.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_headshot.jpg`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    }
+    const url = `/api/serve-file?studentId=${submission.id}&type=headshot`
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${submission.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_headshot.jpg`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const handleHeadshotClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (submission.headshotUrl) {
-      onModalOpen()
-    }
+    onModalOpen()
   }
 
   return (
@@ -142,7 +139,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                       transition="all 0.2s"
                     >
                       <NextImage
-                        src={submission.headshotUrl}
+                        src={`/api/serve-file?studentId=${submission.id}&type=headshot`}
                         alt={submission.fullName + ' headshot'}
                         width={80}
                         height={80}
@@ -330,7 +327,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                   {submission.resumeUrl && (
                       <Button
                         as="a"
-                        href={`/api/serve-file?fileUrl=${encodeURIComponent(submission.resumeUrl)}`}
+                        href={`/api/serve-file?studentId=${submission.id}&type=resume`}
                         target="_blank"
                         size="sm"
                         colorScheme="green"
@@ -369,7 +366,7 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
                 p={4}
               >
                 <Image
-                  src={submission.headshotUrl!}
+                  src={`/api/serve-file?studentId=${submission.id}&type=headshot`}
                   alt={`${submission.fullName} headshot`}
                   maxH="400px"
                   mx="auto"
@@ -551,7 +548,7 @@ export default function Submissions() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentIds: selectedIds }),
       })
-      if (!res.ok) throw new Error('Failed to export resumes')
+      if (!res.ok) throw new Error('Failed to export resumes\n');
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -722,12 +719,12 @@ export default function Submissions() {
             {!loading && submissions.length > 0 && (
         <VStack spacing={4} align="stretch">
           {submissions.map((submission) => (
-                  <SubmissionCard
-                    key={submission.id}
-                    submission={submission}
-                    isSelected={selectedIds.includes(submission.id)}
-                    onSelect={handleSelect}
-                  />
+            <SubmissionCard
+              key={submission.id}
+              submission={submission}
+              isSelected={selectedIds.includes(submission.id)}
+              onSelect={handleSelect}
+            />
           ))}
         </VStack>
             )}
@@ -736,4 +733,4 @@ export default function Submissions() {
     </Container>
     </Box>
   )
-} 
+}
