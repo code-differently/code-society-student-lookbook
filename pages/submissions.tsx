@@ -527,7 +527,7 @@ export default function Submissions() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'student-profiles.html'
+      a.download = 'CodeDifferentlyResumesBulk.pdf'
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -654,7 +654,7 @@ export default function Submissions() {
                 isLoading={exporting}
                 isDisabled={selectedIds.length === 0}
               >
-                Export Profiles
+                Bulk Download Resumes
               </Button>
               <Button
                 colorScheme="green"
