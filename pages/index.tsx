@@ -224,7 +224,7 @@ export default function Home() {
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl isRequired>
             <FormLabel>LinkedIn URL</FormLabel>
             <Input
               type="url"
@@ -234,7 +234,7 @@ export default function Home() {
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl isRequired>
             <FormLabel>GitHub URL</FormLabel>
             <Input
               type="url"
@@ -300,35 +300,6 @@ export default function Home() {
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
-            {formData.educationDegree.length > 0 && (
-              <Box mt={2}>
-                <Text fontSize="sm" fontWeight="bold">Selected Education:</Text>
-                <Wrap mt={1}>
-                  {formData.educationDegree.map((degree) => (
-                    <WrapItem key={degree}>
-                      <Tag
-                        size="md"
-                        borderRadius="full"
-                        variant="solid"
-                        colorScheme="teal"
-                        cursor="pointer"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            educationDegree: formData.educationDegree.filter((d) => d !== degree),
-                          })
-                        }}
-                        _hover={{ transform: 'scale(1.05)' }}
-                        transition="all 0.2s"
-                      >
-                        <TagLabel>{degree}</TagLabel>
-                        <TagCloseButton />
-                      </Tag>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-            )}
           </FormControl>
 
           <FormControl isRequired>
@@ -381,6 +352,8 @@ export default function Home() {
           <VStack spacing={6} align="stretch">
           <FormControl isInvalid={!!errors.technicalSkills}>
             <FormLabel>Technical Skills (Select at least one)</FormLabel>
+          </FormControl>
+          <ScaleFade in={true} initialScale={0.95}>
             <Menu closeOnSelect={false}>
               <MenuButton
                 as={Button}
@@ -398,7 +371,7 @@ export default function Home() {
                   ? `${formData.technicalSkills.length} skills selected` 
                   : 'Select technical skills'}
               </MenuButton>
-              <MenuList maxHeight="300px" overflowY="auto">
+              <MenuList maxHeight="300px" overflowY="auto" zIndex={1500}>
                 {Object.entries(SkillCategories).map(([category, skills]) => (
                   <MenuGroup key={category} title={category}>
                     {skills.map((skill) => (
@@ -444,39 +417,41 @@ export default function Home() {
             {errors.technicalSkills && (
               <FormErrorMessage>{errors.technicalSkills}</FormErrorMessage>
             )}
-            {formData.technicalSkills.length > 0 && (
-              <Box mt={2}>
-                <Text fontSize="sm" fontWeight="bold">Selected Skills:</Text>
-                <Wrap mt={1}>
-                  {formData.technicalSkills.map((skill) => (
-                    <WrapItem key={skill}>
-                      <Tag
-                        size="md"
-                        borderRadius="full"
-                        variant="solid"
-                        colorScheme="blue"
-                        cursor="pointer"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            technicalSkills: formData.technicalSkills.filter((s) => s !== skill),
-                          })
-                        }}
-                        _hover={{ transform: 'scale(1.05)' }}
-                        transition="all 0.2s"
-                      >
-                        <TagLabel>{skill}</TagLabel>
-                        <TagCloseButton />
-                      </Tag>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-            )}
-          </FormControl>
+          </ScaleFade>
+          {formData.technicalSkills.length > 0 && (
+            <Box mt={2} mb={2}>
+              <Text fontSize="sm" fontWeight="bold">Selected Skills:</Text>
+              <Wrap mt={1}>
+                {formData.technicalSkills.map((skill) => (
+                  <WrapItem key={skill}>
+                    <Tag
+                      size="md"
+                      borderRadius="full"
+                      variant="solid"
+                      colorScheme="blue"
+                      cursor="pointer"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          technicalSkills: formData.technicalSkills.filter((s) => s !== skill),
+                        })
+                      }}
+                      _hover={{ transform: 'scale(1.05)' }}
+                      transition="all 0.2s"
+                    >
+                      <TagLabel>{skill}</TagLabel>
+                      <TagCloseButton />
+                    </Tag>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            </Box>
+          )}
 
           <FormControl isInvalid={!!errors.certifications}>
             <FormLabel>Certifications (Select at least one)</FormLabel>
+          </FormControl>
+          <ScaleFade in={true} initialScale={0.95}>
             <Menu closeOnSelect={false}>
               <MenuButton
                 as={Button}
@@ -494,7 +469,7 @@ export default function Home() {
                   ? `${formData.certifications.length} certifications selected` 
                   : 'Select certifications'}
               </MenuButton>
-              <MenuList maxHeight="300px" overflowY="auto">
+              <MenuList maxHeight="300px" overflowY="auto" zIndex={1500}>
                 <MenuOptionGroup type="checkbox">
                   {CertificationOptions.map((cert) => (
                     <MenuItemOption
@@ -537,36 +512,36 @@ export default function Home() {
             {errors.certifications && (
               <FormErrorMessage>{errors.certifications}</FormErrorMessage>
             )}
-            {formData.certifications.length > 0 && (
-              <Box mt={2}>
-                <Text fontSize="sm" fontWeight="bold">Selected Certifications:</Text>
-                <Wrap mt={1}>
-                  {formData.certifications.map((cert) => (
-                    <WrapItem key={cert.name}>
-                      <Tag
-                        size="md"
-                        borderRadius="full"
-                        variant="solid"
-                        colorScheme="green"
-                        cursor="pointer"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            certifications: formData.certifications.filter((c) => c.name !== cert.name),
-                          })
-                        }}
-                        _hover={{ transform: 'scale(1.05)' }}
-                        transition="all 0.2s"
-                      >
-                        <TagLabel>{cert.name}</TagLabel>
-                        <TagCloseButton />
-                      </Tag>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-            )}
-          </FormControl>
+          </ScaleFade>
+          {formData.certifications.length > 0 && (
+            <Box mt={2} mb={2}>
+              <Text fontSize="sm" fontWeight="bold">Selected Certifications:</Text>
+              <Wrap mt={1}>
+                {formData.certifications.map((cert) => (
+                  <WrapItem key={cert.name}>
+                    <Tag
+                      size="md"
+                      borderRadius="full"
+                      variant="solid"
+                      colorScheme="green"
+                      cursor="pointer"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          certifications: formData.certifications.filter((c) => c.name !== cert.name),
+                        })
+                      }}
+                      _hover={{ transform: 'scale(1.05)' }}
+                      transition="all 0.2s"
+                    >
+                      <TagLabel>{cert.name}</TagLabel>
+                      <TagCloseButton />
+                    </Tag>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            </Box>
+          )}
         </VStack>
         </Box>
       ),
@@ -580,6 +555,8 @@ export default function Home() {
           <VStack spacing={6} align="stretch">
           <FormControl isInvalid={!!errors.careerInterests}>
             <FormLabel>Career Interests (Select at least one)</FormLabel>
+          </FormControl>
+          <ScaleFade in={true} initialScale={0.95}>
             <Menu closeOnSelect={false}>
               <MenuButton
                 as={Button}
@@ -597,7 +574,7 @@ export default function Home() {
                   ? `${formData.careerInterests.length} interests selected` 
                   : 'Select career interests'}
               </MenuButton>
-              <MenuList maxHeight="300px" overflowY="auto">
+              <MenuList maxHeight="300px" overflowY="auto" zIndex={1500}>
                 <MenuOptionGroup type="checkbox">
                   {CareerInterestOptions.map((interest) => (
                     <MenuItemOption
@@ -640,39 +617,41 @@ export default function Home() {
             {errors.careerInterests && (
               <FormErrorMessage>{errors.careerInterests}</FormErrorMessage>
             )}
-            {formData.careerInterests.length > 0 && (
-              <Box mt={2}>
-                <Text fontSize="sm" fontWeight="bold">Selected Interests:</Text>
-                <Wrap mt={1}>
-                  {formData.careerInterests.map((interest) => (
-                    <WrapItem key={interest}>
-                      <Tag
-                        size="md"
-                        borderRadius="full"
-                        variant="solid"
-                        colorScheme="purple"
-                        cursor="pointer"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            careerInterests: formData.careerInterests.filter((i) => i !== interest),
-                          })
-                        }}
-                        _hover={{ transform: 'scale(1.05)' }}
-                        transition="all 0.2s"
-                      >
-                        <TagLabel>{interest}</TagLabel>
-                        <TagCloseButton />
-                      </Tag>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-            )}
-          </FormControl>
+          </ScaleFade>
+          {formData.careerInterests.length > 0 && (
+            <Box mt={2} mb={2}>
+              <Text fontSize="sm" fontWeight="bold">Selected Interests:</Text>
+              <Wrap mt={1}>
+                {formData.careerInterests.map((interest) => (
+                  <WrapItem key={interest}>
+                    <Tag
+                      size="md"
+                      borderRadius="full"
+                      variant="solid"
+                      colorScheme="purple"
+                      cursor="pointer"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          careerInterests: formData.careerInterests.filter((i) => i !== interest),
+                        })
+                      }}
+                      _hover={{ transform: 'scale(1.05)' }}
+                      transition="all 0.2s"
+                    >
+                      <TagLabel>{interest}</TagLabel>
+                      <TagCloseButton />
+                    </Tag>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            </Box>
+          )}
 
           <FormControl isInvalid={!!errors.workExperience}>
             <FormLabel>Past Work Experience (Select at least one)</FormLabel>
+          </FormControl>
+          <ScaleFade in={true} initialScale={0.95}>
             <Menu closeOnSelect={false}>
               <MenuButton
                 as={Button}
@@ -690,7 +669,7 @@ export default function Home() {
                   ? `${formData.workExperience.length} experiences selected` 
                   : 'Select work experience'}
               </MenuButton>
-              <MenuList maxHeight="300px" overflowY="auto">
+              <MenuList maxHeight="300px" overflowY="auto" zIndex={1500}>
                 <MenuOptionGroup type="checkbox">
                   {WorkExperienceOptions.map((exp) => (
                     <MenuItemOption
@@ -733,36 +712,36 @@ export default function Home() {
             {errors.workExperience && (
               <FormErrorMessage>{errors.workExperience}</FormErrorMessage>
             )}
-            {formData.workExperience.length > 0 && (
-              <Box mt={2}>
-                <Text fontSize="sm" fontWeight="bold">Selected Experience:</Text>
-                <Wrap mt={1}>
-                  {formData.workExperience.map((exp) => (
-                    <WrapItem key={exp}>
-                      <Tag
-                        size="md"
-                        borderRadius="full"
-                        variant="solid"
-                        colorScheme="orange"
-                        cursor="pointer"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            workExperience: formData.workExperience.filter((w) => w !== exp),
-                          })
-                        }}
-                        _hover={{ transform: 'scale(1.05)' }}
-                        transition="all 0.2s"
-                      >
-                        <TagLabel>{exp}</TagLabel>
-                        <TagCloseButton />
-                      </Tag>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-            )}
-          </FormControl>
+          </ScaleFade>
+          {formData.workExperience.length > 0 && (
+            <Box mt={2} mb={2}>
+              <Text fontSize="sm" fontWeight="bold">Selected Experience:</Text>
+              <Wrap mt={1}>
+                {formData.workExperience.map((exp) => (
+                  <WrapItem key={exp}>
+                    <Tag
+                      size="md"
+                      borderRadius="full"
+                      variant="solid"
+                      colorScheme="orange"
+                      cursor="pointer"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          workExperience: formData.workExperience.filter((w) => w !== exp),
+                        })
+                      }}
+                      _hover={{ transform: 'scale(1.05)' }}
+                      transition="all 0.2s"
+                    >
+                      <TagLabel>{exp}</TagLabel>
+                      <TagCloseButton />
+                    </Tag>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            </Box>
+          )}
 
           <FormControl isRequired>
             <FormLabel>Years of Professional Experience</FormLabel>
@@ -871,4 +850,4 @@ export default function Home() {
       </VStack>
     </Container>
   )
-} 
+}

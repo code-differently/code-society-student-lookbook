@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../lib/prisma'
+import clientPromise from '../../lib/mongodb'
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,18 +16,13 @@ export default async function handler(
       return res.status(400).json({ message: 'Student IDs array is required' })
     }
 
-    const students = await prisma.student.findMany({
-      where: {
-        id: { in: studentIds }
-      },
-      include: {
-        technicalSkills: true,
-        certifications: true,
-        careerInterests: true,
-        workExperience: true,
-      },
-      orderBy: { fullName: 'asc' }
-    })
+    // Get students from MongoDB by IDs
+    const client = await clientPromise
+    const db = client.db()
+    const students = await db.collection('students')
+      .find({ id: { $in: studentIds } })
+      .sort({ fullName: 1 })
+      .toArray()
 
     if (students.length === 0) {
       return res.status(404).json({ message: 'No students found' })
@@ -244,4 +239,4 @@ function generateProfilesHTML(students: any[]) {
 </body>
 </html>
   `
-} 
+}

@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { prisma } from '../../lib/prisma'
+import clientPromise from '../../lib/mongodb'
 
 export default async function handler(
   req: NextApiRequest,
@@ -38,214 +38,77 @@ export default async function handler(
       offset = '0'
     } = req.query
 
-    const whereConditions: any = {}
-
-    // Text search
+    // Build MongoDB query
+    const query: any = {}
     if (search) {
-      whereConditions.OR = [
-        { fullName: { contains: search as string, mode: 'insensitive' } },
-        { email: { contains: search as string, mode: 'insensitive' } },
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
       ]
     }
-
-    // Skills filtering with combination logic
-    if (skills && skills.length > 0) {
-      const skillArray = Array.isArray(skills) ? skills : skills.split(',')
-      
-      if (skillCombination === 'all') {
-        // Must have ALL selected skills
-        whereConditions.technicalSkills = {
-          every: {
-            name: { in: skillArray }
-          }
-        }
-      } else if (skillCombination === 'exact') {
-        // Must have EXACTLY these skills (no more, no less)
-        whereConditions.technicalSkills = {
-          every: {
-            name: { in: skillArray }
-          }
-        }
-        // This is a simplified version - for exact match we'd need more complex logic
-      } else {
-        // Default: ANY of the selected skills
-        whereConditions.technicalSkills = {
-          some: {
-            name: { in: skillArray }
-          }
-        }
-      }
+    if (skills) {
+      const skillArray = Array.isArray(skills) ? skills : String(skills).split(',')
+      query.technicalSkills = { $in: skillArray }
     }
-
-    // Skill count filtering
-    if (minSkills && parseInt(minSkills as string) > 0) {
-      whereConditions.technicalSkills = {
-        ...whereConditions.technicalSkills,
-        _count: {
-          gte: parseInt(minSkills as string)
-        }
-      }
+    if (certifications) {
+      const certArray = Array.isArray(certifications) ? certifications : String(certifications).split(',')
+      query['certifications.name'] = { $in: certArray }
     }
-
-    if (maxSkills && parseInt(maxSkills as string) > 0) {
-      whereConditions.technicalSkills = {
-        ...whereConditions.technicalSkills,
-        _count: {
-          ...whereConditions.technicalSkills?._count,
-          lte: parseInt(maxSkills as string)
-        }
-      }
+    if (interests) {
+      const interestArray = Array.isArray(interests) ? interests : String(interests).split(',')
+      query.careerInterests = { $in: interestArray }
     }
-
-    // Certifications filtering
-    if (certifications && certifications.length > 0) {
-      const certArray = Array.isArray(certifications) ? certifications : certifications.split(',')
-      whereConditions.certifications = {
-        some: {
-          name: { in: certArray }
-        }
-      }
+    if (workExperience) {
+      const expArray = Array.isArray(workExperience) ? workExperience : String(workExperience).split(',')
+      query.workExperience = { $in: expArray }
     }
-
-    // Has any certification filter
-    if (hasAnyCertification === 'true') {
-      whereConditions.certifications = {
-        some: {}
-      }
-    }
-
-    // Career interests filtering
-    if (interests && interests.length > 0) {
-      const interestArray = Array.isArray(interests) ? interests : interests.split(',')
-      whereConditions.careerInterests = {
-        some: {
-          name: { in: interestArray }
-        }
-      }
-    }
-
-    // Work experience filtering
-    if (workExperience && workExperience.length > 0) {
-      const expArray = Array.isArray(workExperience) ? workExperience : workExperience.split(',')
-      whereConditions.workExperience = {
-        some: {
-          name: { in: expArray }
-        }
-      }
-    }
-
-    // Has work experience filter
-    if (hasWorkExperience === 'true') {
-      whereConditions.workExperience = {
-        some: {}
-      }
-    }
-
-    // Date range filtering
-    if (dateFrom) {
-      whereConditions.createdAt = {
-        ...whereConditions.createdAt,
-        gte: new Date(dateFrom as string)
-      }
-    }
-
-    if (dateTo) {
-      whereConditions.createdAt = {
-        ...whereConditions.createdAt,
-        lte: new Date(dateTo as string)
-      }
-    }
-
-    // Has Resume filter
     if (hasResume === 'true') {
-      whereConditions.resumeUrl = { 
-        not: {
-          in: [null, '']
-        }
-      }
+      query.resumeUrl = { $ne: '' }
     }
-
-    // Has LinkedIn filter
     if (hasLinkedIn === 'true') {
-      whereConditions.linkedinUrl = { 
-        not: {
-          in: [null, '']
-        }
-      }
+      query.linkedinUrl = { $ne: '' }
     }
-
-    // Profile completeness filter
-    if (profileCompleteness === 'complete') {
-      whereConditions.AND = [
-        { resumeUrl: { not: { in: [null, ''] } } },
-        { linkedinUrl: { not: { in: [null, ''] } } },
-        { githubUrl: { not: { in: [null, ''] } } },
-      ]
-    } else if (profileCompleteness === 'partial') {
-      whereConditions.OR = [
-        { resumeUrl: { in: [null, ''] } },
-        { linkedinUrl: { in: [null, ''] } },
-        { githubUrl: { in: [null, ''] } },
-      ]
+    if (yearsOfExperience) {
+      const expArray = Array.isArray(yearsOfExperience) ? yearsOfExperience : String(yearsOfExperience).split(',')
+      query.yearsOfExperience = { $in: expArray }
     }
-
-    // Years of experience filter
-    if (yearsOfExperience && yearsOfExperience.length > 0) {
-      const expArray = Array.isArray(yearsOfExperience) ? yearsOfExperience : yearsOfExperience.split(',')
-      whereConditions.yearsOfExperience = { in: expArray }
+    if (educationDegrees) {
+      const degreeArray = Array.isArray(educationDegrees) ? educationDegrees : String(educationDegrees).split(',')
+      query.educationDegree = { $in: degreeArray }
     }
-
-    // Education degrees filter
-    if (educationDegrees && educationDegrees.length > 0) {
-      const degreeArray = Array.isArray(educationDegrees) ? educationDegrees : educationDegrees.split(',')
-      whereConditions.educationDegrees = {
-        some: {
-          name: { in: degreeArray }
-        }
-      }
-    }
-
-    // Field of study filter
     if (educationField) {
-      whereConditions.educationField = { contains: educationField as string, mode: 'insensitive' }
+      query.educationField = { $regex: educationField, $options: 'i' }
     }
+    // Add more filters as needed
 
-    // Build orderBy based on sortBy parameter
-    let orderBy: any = { createdAt: 'desc' }
-    if (sortBy === 'oldest') {
-      orderBy = { createdAt: 'asc' }
-    } else if (sortBy === 'name-asc') {
-      orderBy = { fullName: 'asc' }
-    } else if (sortBy === 'name-desc') {
-      orderBy = { fullName: 'desc' }
-    }
+    // Sorting
+    let sort: any = { createdAt: -1 }
+    if (sortBy === 'oldest') sort = { createdAt: 1 }
+    if (sortBy === 'name-asc') sort = { fullName: 1 }
+    if (sortBy === 'name-desc') sort = { fullName: -1 }
 
-    const submissions = await prisma.student.findMany({
-      where: whereConditions,
-      include: {
-        technicalSkills: true,
-        certifications: true,
-        careerInterests: true,
-        workExperience: true,
-        educationDegrees: true,
-      },
-      orderBy,
-      take: parseInt(limit as string),
-      skip: parseInt(offset as string),
-    })
+    const client = await clientPromise
+    const db = client.db()
+    const studentsCol = db.collection('students')
 
-    // Get total count for pagination
-    const totalCount = await prisma.student.count({
-      where: whereConditions,
-    })
+    const skip = parseInt(offset as string)
+    const lim = parseInt(limit as string)
+
+    const totalCount = await studentsCol.countDocuments(query)
+    const submissions = await studentsCol
+      .find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(lim)
+      .toArray()
 
     return res.status(200).json({
       submissions,
       totalCount,
-      hasMore: submissions.length === parseInt(limit as string)
+      hasMore: skip + lim < totalCount
     })
   } catch (error) {
     console.error('Error fetching submissions:', error)
     return res.status(500).json({ message: 'Error fetching submissions' })
   }
-} 
+}

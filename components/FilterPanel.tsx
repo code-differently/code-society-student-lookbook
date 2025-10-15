@@ -74,8 +74,6 @@ export interface FilterState {
   dateFrom: string
   dateTo: string
   sortBy: string
-  hasResume: boolean
-  hasLinkedIn: boolean
   skillCombination: 'any' | 'all' | 'exact'
   minSkills: number
   maxSkills: number
@@ -113,8 +111,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
     dateFrom: '',
     dateTo: '',
     sortBy: 'newest',
-    hasResume: false,
-    hasLinkedIn: false,
     skillCombination: 'any',
     minSkills: 0,
     maxSkills: 0,
@@ -162,8 +158,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
       dateFrom: '',
       dateTo: '',
       sortBy: 'newest',
-      hasResume: false,
-      hasLinkedIn: false,
       skillCombination: 'any',
       minSkills: 0,
       maxSkills: 0,
@@ -185,8 +179,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
     filters.workExperience.length > 0 || 
     filters.dateFrom || 
     filters.dateTo ||
-    filters.hasResume ||
-    filters.hasLinkedIn ||
     filters.sortBy !== 'newest'
 
   // Modern Multi-select Component
@@ -341,41 +333,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
           ))}
         </Select>
       </FormControl>
-
-      {/* Toggles */}
-      <Card variant="outline" borderColor="gray.200" bg="gray.50">
-        <CardBody py={4}>
-          <Text fontSize="sm" fontWeight="500" color="gray.700" mb={3}>
-            Profile Requirements
-          </Text>
-          <SimpleGrid columns={2} spacing={4}>
-            <FormControl display="flex" alignItems="center">
-              <Switch
-                id="hasResume"
-                isChecked={filters.hasResume}
-                onChange={e => updateFilter('hasResume', e.target.checked)}
-                colorScheme="blue"
-                mr={3}
-              />
-              <FormLabel htmlFor="hasResume" mb="0" fontSize="sm" color="gray.600">
-                Has Resume
-              </FormLabel>
-            </FormControl>
-            <FormControl display="flex" alignItems="center">
-              <Switch
-                id="hasLinkedIn"
-                isChecked={filters.hasLinkedIn}
-                onChange={e => updateFilter('hasLinkedIn', e.target.checked)}
-                colorScheme="blue"
-                mr={3}
-              />
-              <FormLabel htmlFor="hasLinkedIn" mb="0" fontSize="sm" color="gray.600">
-                Has LinkedIn
-              </FormLabel>
-            </FormControl>
-          </SimpleGrid>
-        </CardBody>
-      </Card>
 
       {/* Date Range */}
       <Card variant="outline" borderColor="gray.200" bg="gray.50">
