@@ -97,6 +97,7 @@ export default async function handler(
         headshotData,
         headshotMimeType,
         yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
+        yearsOfTechExperience: getFirstField(fields.yearsOfTechExperience) ?? null,
         educationField: getFirstField(fields.educationField) ?? null,
         educationDegree: JSON.parse(getFirstField(fields.educationDegree) ?? '[]'),
         technicalSkills: JSON.parse(getFirstField(fields.technicalSkills) ?? '[]'),

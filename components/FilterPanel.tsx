@@ -83,6 +83,7 @@ export interface FilterState {
   skillLevel: 'any' | 'beginner' | 'intermediate' | 'advanced'
   certificationLevel: 'any' | 'entry' | 'professional' | 'expert'
   yearsOfExperience?: string[]
+  yearsOfTechExperience?: string[]
   educationDegrees?: string[]
   educationField?: string
 }
@@ -120,6 +121,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
     skillLevel: 'any',
     certificationLevel: 'any',
     yearsOfExperience: [],
+    yearsOfTechExperience: [],
     educationDegrees: [],
     educationField: '',
   })
@@ -167,6 +169,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
       skillLevel: 'any',
       certificationLevel: 'any',
       yearsOfExperience: [],
+      yearsOfTechExperience: [],
       educationDegrees: [],
       educationField: '',
     })
@@ -445,6 +448,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
         placeholder="Select years of experience..."
         colorScheme="cyan"
         label="Years of Experience"
+      />
+
+      <MultiSelect
+        options={['0-3', '4-7', '8+']}
+        value={filters.yearsOfTechExperience || []}
+        onChange={val => updateFilter('yearsOfTechExperience', val)}
+        placeholder="Select years of technical experience..."
+        colorScheme="cyan"
+        label="Years of Technical Experience"
       />
 
 

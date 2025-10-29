@@ -67,6 +67,7 @@ export default function Home() {
     careerInterests: [],
     workExperience: [],
     yearsOfExperience: '',
+    yearsOfTechExperience: '',
     educationDegree: [],
     educationField: '',
   })
@@ -117,6 +118,7 @@ export default function Home() {
       }
       form.append('technicalSkills', JSON.stringify(formData.technicalSkills))
       form.append('yearsOfExperience', formData.yearsOfExperience)
+      form.append('yearsOfTechExperience', formData.yearsOfTechExperience)
       form.append('educationDegree', JSON.stringify(formData.educationDegree))
       form.append('educationField', formData.educationField)
       form.append('certifications', JSON.stringify(formData.certifications))
@@ -350,7 +352,7 @@ export default function Home() {
       fields: (
         <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.100">
           <VStack spacing={6} align="stretch">
-          <FormControl isInvalid={!!errors.technicalSkills}>
+          <FormControl isRequired isInvalid={!!errors.technicalSkills}>
             <FormLabel>Technical Skills (Select at least one)</FormLabel>
           </FormControl>
           <ScaleFade in={true} initialScale={0.95}>
@@ -448,7 +450,7 @@ export default function Home() {
             </Box>
           )}
 
-          <FormControl isInvalid={!!errors.certifications}>
+          <FormControl isRequired isInvalid={!!errors.certifications}>
             <FormLabel>Certifications (Select at least one)</FormLabel>
           </FormControl>
           <ScaleFade in={true} initialScale={0.95}>
@@ -553,7 +555,7 @@ export default function Home() {
       fields: (
         <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.100">
           <VStack spacing={6} align="stretch">
-          <FormControl isInvalid={!!errors.careerInterests}>
+          <FormControl isRequired isInvalid={!!errors.careerInterests}>
             <FormLabel>Career Interests (Select at least one)</FormLabel>
           </FormControl>
           <ScaleFade in={true} initialScale={0.95}>
@@ -648,7 +650,7 @@ export default function Home() {
             </Box>
           )}
 
-          <FormControl isInvalid={!!errors.workExperience}>
+          <FormControl isRequired isInvalid={!!errors.workExperience}>
             <FormLabel>Past Work Experience (Select at least one)</FormLabel>
           </FormControl>
           <ScaleFade in={true} initialScale={0.95}>
@@ -748,6 +750,20 @@ export default function Home() {
             <RadioGroup
               value={formData.yearsOfExperience}
               onChange={val => setFormData({ ...formData, yearsOfExperience: val })}
+            >
+              <Stack direction="row">
+                <Radio value="0-3">0-3 years</Radio>
+                <Radio value="4-7">4-7 years</Radio>
+                <Radio value="8+">8+ years</Radio>
+              </Stack>
+            </RadioGroup>
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Years of Technical Experience</FormLabel>
+            <RadioGroup
+              value={formData.yearsOfTechExperience}
+              onChange={val => setFormData({ ...formData, yearsOfTechExperience: val })}
             >
               <Stack direction="row">
                 <Radio value="0-3">0-3 years</Radio>

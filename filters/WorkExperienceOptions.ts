@@ -14,6 +14,7 @@ export const WorkExperienceOptions = [
     "Manufacturing",
     "Marketing",
     "Media & Entertainment",
+    "Military",
     "Non-profit",
     "Real Estate",
     "Retail",
