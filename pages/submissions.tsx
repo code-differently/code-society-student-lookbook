@@ -245,6 +245,13 @@ function SubmissionCard({ submission, isSelected, onSelect }: { submission: Subm
               </Box>
 
               <Box>
+                  <Text fontWeight="600" mb={2} color="gray.700">Years of Technical Experience</Text>
+                  <Text color="gray.600" fontSize="sm">
+                    {submission.yearsOfTechExperience || '—'}
+                  </Text>
+              </Box>
+
+              <Box>
                   <Text fontWeight="600" mb={3} color="gray.700">Technical Skills</Text>
                   <Wrap spacing={2}>
                   {submission.technicalSkills.map((skill, index) => (
@@ -424,6 +431,7 @@ export default function Submissions() {
     skillLevel: 'any',
     certificationLevel: 'any',
     yearsOfExperience: [],
+    yearsOfTechExperience: [],
     educationDegrees: [],
     educationField: '',
   })
@@ -468,6 +476,9 @@ export default function Submissions() {
     if (filters.yearsOfExperience && filters.yearsOfExperience.length > 0) {
       params.append('yearsOfExperience', filters.yearsOfExperience.join(','))
     }
+    if (filters.yearsOfTechExperience && filters.yearsOfTechExperience.length > 0) {
+      params.append('yearsOfTechExperience', filters.yearsOfTechExperience.join(','))
+    }
     if (filters.educationDegrees && filters.educationDegrees.length > 0) {
       params.append('educationDegrees', filters.educationDegrees.join(','))
     }
@@ -487,7 +498,7 @@ export default function Submissions() {
       const url = queryString ? `/api/submissions?${queryString}` : '/api/submissions'
       
       const response = await fetch(url)
-        if (!response.ok) throw new Error('Failed to fetch submissions')
+        if (!response.ok) throw new Error('Failed to fetch submissions: ' + response.statusText)
       
       const data: ApiResponse = await response.json()
       setSubmissions(data.submissions)

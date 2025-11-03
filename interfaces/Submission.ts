@@ -13,6 +13,7 @@ export interface Submission {
   careerInterests: string[]
   workExperience: string[]
   yearsOfExperience: string
+  yearsOfTechExperience: string
   educationDegree: string[]
   educationField: string
   createdAt: Date

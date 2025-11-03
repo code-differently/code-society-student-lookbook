@@ -32,6 +32,7 @@ export default async function handler(
       certificationLevel = 'any',
       // Education filters
       yearsOfExperience,
+      yearsOfTechExperience,
       educationDegrees,
       educationField,
       limit = '50',
@@ -71,6 +72,10 @@ export default async function handler(
     if (yearsOfExperience) {
       const expArray = Array.isArray(yearsOfExperience) ? yearsOfExperience : String(yearsOfExperience).split(',')
       query.yearsOfExperience = { $in: expArray }
+    }
+    if (yearsOfTechExperience) {
+      const expArray = Array.isArray(yearsOfTechExperience) ? yearsOfTechExperience : String(yearsOfTechExperience).split(',')
+      query.yearsOfTechExperience = { $in: expArray }
     }
     if (educationDegrees) {
       const degreeArray = Array.isArray(educationDegrees) ? educationDegrees : String(educationDegrees).split(',')
