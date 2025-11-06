@@ -96,6 +96,7 @@ export default async function handler(
         resumeMimeType,
         headshotData,
         headshotMimeType,
+        veteran: getFirstField(fields.veteran) ?? '',
         yearsOfExperience: getFirstField(fields.yearsOfExperience) ?? null,
         yearsOfTechExperience: getFirstField(fields.yearsOfTechExperience) ?? null,
         educationField: getFirstField(fields.educationField) ?? null,
