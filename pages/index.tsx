@@ -62,6 +62,7 @@ export default function Home() {
     githubUrl: '',
     resume: null,
     headshot: null,
+    veteran: '',
     technicalSkills: [],
     certifications: [],
     careerInterests: [],
@@ -116,6 +117,7 @@ export default function Home() {
       if (formData.headshot) {
         form.append('headshot', formData.headshot)
       }
+      form.append('veteran', formData.veteran)
       form.append('technicalSkills', JSON.stringify(formData.technicalSkills))
       form.append('yearsOfExperience', formData.yearsOfExperience)
       form.append('yearsOfTechExperience', formData.yearsOfTechExperience)
@@ -318,6 +320,19 @@ export default function Home() {
                 </option>
               ))}
             </Select>
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Military/Veteran Status</FormLabel>
+            <RadioGroup
+              value={formData.veteran}
+              onChange={val => setFormData({ ...formData, veteran: val })}
+            >
+              <Stack direction="row">
+                <Radio value="Yes">Yes</Radio>
+                <Radio value="No">No</Radio>
+              </Stack>
+            </RadioGroup>
           </FormControl>
         </VStack>
       ),

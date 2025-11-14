@@ -35,6 +35,8 @@ export default async function handler(
       yearsOfTechExperience,
       educationDegrees,
       educationField,
+      // Veteran status
+      veteran,
       limit = '50',
       offset = '0'
     } = req.query
@@ -84,6 +86,9 @@ export default async function handler(
     if (educationField) {
       query.educationField = { $regex: educationField, $options: 'i' }
     }
+    if (veteran) {
+      query.veteran = veteran
+    }
     // Add more filters as needed
 
     // Sorting
@@ -121,6 +126,21 @@ export default async function handler(
     })
   } catch (error) {
     console.error('Error fetching submissions:', error)
-    return res.status(500).json({ message: 'Error fetching submissions' })
+    
+    // Provide specific error messages for common MongoDB issues
+    if (error instanceof Error) {
+      if (error.message.includes('MongoServerSelectionError')) {
+        console.error('MongoDB connection issue. Check your connection string and network access.')
+        return res.status(500).json({ 
+          message: 'Database connection failed. Please check MongoDB Atlas connectivity.',
+          error: process.env.NODE_ENV === 'development' ? error.message : 'Database connection error'
+        })
+      }
+    }
+    
+    return res.status(500).json({ 
+      message: 'Error fetching submissions',
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : 'Internal server error'
+    })
   }
 }

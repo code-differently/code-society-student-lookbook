@@ -8,6 +8,7 @@ export interface Submission {
   githubUrl: string
   resume: File | null
   headshot: File | null
+  veteran: string
   technicalSkills: string[]
   certifications: CertificationWithStatus[]
   careerInterests: string[]

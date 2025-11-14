@@ -71,6 +71,7 @@ export interface FilterState {
   certifications: string[]
   interests: string[]
   workExperience: string[]
+  veteran: string
   dateFrom: string
   dateTo: string
   sortBy: string
@@ -109,6 +110,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
     certifications: [],
     interests: [],
     workExperience: [],
+    veteran: '',
     dateFrom: '',
     dateTo: '',
     sortBy: 'newest',
@@ -157,6 +159,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
       certifications: [],
       interests: [],
       workExperience: [],
+      veteran: '',
       dateFrom: '',
       dateTo: '',
       sortBy: 'newest',
@@ -375,6 +378,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
       </Card>
 
       {/* Skills */}
+      <FormControl mb={2}>
+        <FormLabel>Veteran Status</FormLabel>
+        <Select
+          placeholder="Select veteran status"
+          value={filters.veteran || ''}
+          onChange={e => updateFilter('veteran', e.target.value)}
+        >
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </Select>
+      </FormControl>
+
       <MultiSelect
         options={availableTags.skills}
         value={filters.skills}
@@ -458,8 +473,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ onFiltersChange, isLoading = 
         colorScheme="cyan"
         label="Years of Technical Experience"
       />
-
-
 
       {/* Advanced Filters */}
       <Card variant="outline" borderColor="gray.200" bg="gray.50">

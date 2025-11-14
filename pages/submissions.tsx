@@ -419,6 +419,7 @@ export default function Submissions() {
     certifications: [],
     interests: [],
     workExperience: [],
+    veteran: '',
     dateFrom: '',
     dateTo: '',
     sortBy: 'newest',
@@ -471,7 +472,7 @@ export default function Submissions() {
     if (filters.certificationLevel && filters.certificationLevel !== 'any') {
       params.append('certificationLevel', filters.certificationLevel)
     }
-    
+    if(filters.veteran && filters.veteran !== '') params.append('veteran', filters.veteran)
     // Education filters
     if (filters.yearsOfExperience && filters.yearsOfExperience.length > 0) {
       params.append('yearsOfExperience', filters.yearsOfExperience.join(','))
@@ -770,6 +771,7 @@ export default function Submissions() {
                     certifications: [],
                     interests: [],
                     workExperience: [],
+                    veteran: '',
                     dateFrom: '',
                     dateTo: '',
                     sortBy: 'newest',
